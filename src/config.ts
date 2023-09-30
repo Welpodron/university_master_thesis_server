@@ -1,0 +1,4 @@
+export const CONFIG = {
+  OPEN_ROUTE_API_KEY:
+    "5b3ce3597851110001cf6248e38fa34a75c74729b2d108b4eed5610b",
+};
