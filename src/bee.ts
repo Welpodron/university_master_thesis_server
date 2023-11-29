@@ -1,12 +1,12 @@
 // TODO: Написать функцию fitness которая будет считать значение пригодности решения
 
-import { getNeighborSolution } from "./neighbor";
+import { getNeighborSolution } from './neighbor';
 import {
   checkAllLocationsVisitedOnce,
   checkCapacity,
   checkDepotsPlacement,
-} from "./constrains";
-import { ProblemType } from "./reader";
+} from './constrains';
+import { ProblemType } from './reader';
 
 // ! x в функции это 1 (i) solution/решение задачи оно представлено в виде массива маршрутов
 export const getFitness = ({ solution }: { solution: number[][] }) => {
