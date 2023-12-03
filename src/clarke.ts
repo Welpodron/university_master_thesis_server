@@ -1,7 +1,7 @@
 // const csv = require("csv-parser");
 // const fs = require("fs");
 
-import { getRouteCapacity } from "./utils";
+import { getRouteCapacity } from './utils';
 
 const getLinkInfo = ({
   link,
@@ -76,6 +76,8 @@ export const clarkeWrightSavingsAlgorithm = ({
   capacity,
   distancesMatrix,
 }: ClarkeWrightSavingsAlgorithmPropsType) => {
+  const start = performance.now();
+
   // Calculate savings between each pair of customers
   // index 0 is the depot
   const savings = [];
@@ -249,7 +251,24 @@ export const clarkeWrightSavingsAlgorithm = ({
     }
   }
 
-  return routes;
+  // calculate trucks and distance
+  let totalDistanceTraveled = 0;
+
+  routes.forEach((route) => {
+    for (let i = 0; i < route.length - 1; i++) {
+      totalDistanceTraveled += distancesMatrix[route[i]][route[i + 1]];
+    }
+  });
+
+  const end = performance.now();
+
+  console.log(`[CLARKE] Execution time: ${end - start} ms`);
+
+  return {
+    routes,
+    totalDistanceTraveled,
+    trucks: routes.length,
+  };
 };
 
 // const clarkeDataDistances = [
