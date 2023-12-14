@@ -45,3 +45,77 @@ export const getRandomElementFromArrayWithoutFirstAndLast = ({
   const randomIndex = Math.floor(Math.random() * (max - min + 1)) + min;
   return { element: array[randomIndex], index: randomIndex };
 };
+
+export const getRandomCVRPSolutionForBee = async ({
+  demands,
+  trucks,
+  capacity,
+}: {
+  demands: number[];
+  trucks: number;
+  capacity: number;
+}) => {
+  const _demands = [...demands];
+
+  let totalDemand = 0;
+
+  for (let i = 1; i < _demands.length; i++) {
+    totalDemand += _demands[i];
+  }
+
+  const agents: {
+    capacity: number;
+    route: number[];
+  }[] = [];
+
+  for (let i = 0; i < trucks; i++) {
+    agents.push({
+      capacity,
+      route: [],
+    });
+  }
+
+  let deadlock = 0;
+  let ignoreCapacity = false;
+
+  while (totalDemand) {
+    if (deadlock > _demands.length + 10) {
+      ignoreCapacity = true;
+      console.log('WARNING! DEADLOCK DETECTED!');
+      // throw new Error(`Возникла ошибка при генерации решения`);
+    }
+
+    for (let agent of agents) {
+      const indexes = [];
+
+      for (let i = 0; i < _demands.length; i++) {
+        if (ignoreCapacity) {
+          if (_demands[i] > 0) {
+            indexes.push(i);
+          }
+        } else {
+          if (_demands[i] > 0 && agent.capacity - _demands[i] >= 0) {
+            indexes.push(i);
+          }
+        }
+      }
+
+      if (!indexes.length) {
+        continue;
+      }
+
+      deadlock = 0;
+
+      const nextNode = indexes[Math.floor(Math.random() * indexes.length)];
+
+      agent.capacity -= _demands[nextNode];
+      agent.route.push(nextNode);
+      totalDemand -= _demands[nextNode];
+      _demands[nextNode] = 0;
+    }
+
+    deadlock++;
+  }
+
+  return agents.map((agent) => agent.route);
+};

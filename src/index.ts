@@ -12,6 +12,21 @@ import cors from 'cors';
 import { log } from './loger';
 import { getDistanceWithOpenRouteService } from './pather';
 import { ant } from './ant';
+import { createProblemGraph } from './visualizer';
+import { getRandomCVRPSolutionForBee } from './random';
+import {
+  generativeSolution,
+  getSolutionTotalDistance,
+  getSolutionTotalDistanceFlat,
+} from './utils';
+import { bee } from './bee';
+import {
+  random_swap,
+  random_swap_sub,
+  random_reversing,
+  random_swap_sub_reverse,
+  random_insert_sub_reverse,
+} from './_neighbor';
 
 type Good = {
   weight: number;
@@ -152,47 +167,84 @@ const PORT = process.env.PORT || 3000;
 // });
 
 const main = async () => {
+  // random_insert_sub_reverse();
   // const problem = await getProblem({
   //   path: `${appRoot}/benchmarks/A/A-n32-k5.vrp`,
   // });
   const problem = await getProblem({
     path: `${appRoot}/benchmarks/A/A-n80-k10.vrp`,
   });
+  // const problem = await getProblem({
+  //   path: `${appRoot}/benchmarks/DIMACS/ORTEC-n323-k21.vrp`,
+  // });
+  // const problem = await getProblem({
+  //   path: `${appRoot}/benchmarks/DIMACS/Loggi-n1001-k31.vrp`,
+  // });
+  // const problem = await getProblem({
+  //   path: `${appRoot}/benchmarks/DIMACS/toy.vrp`,
+  // });
+  // createProblemGraph(problem.coords);
 
   // Problem optimal solution
   console.log('Problem optimal solution');
   console.log({
     distance: problem.optimal,
-    ants: problem.trucks,
+    trucks: problem.trucks,
   });
 
+  const beeSolution = await bee({ problem });
+  console.log('Bee best:');
+  console.log(
+    getSolutionTotalDistanceFlat({
+      solution: beeSolution,
+      distancesMatrix: problem.distancesMatrix,
+    })
+  );
+  // console.log({
+  //   distance: beeSolution.totalDistanceTraveled,
+  //   trucks: beeSolution.trucks,
+  // });
   // console.log({ problem });
-  ant({ problem });
-  const solution = clarkeWrightSavingsAlgorithm({
+  // const antSolution = ant({ problem });
+  const clarkeSolution = clarkeWrightSavingsAlgorithm({
     nodes: problem.dimension,
     demands: problem.demands,
     capacity: problem.capacity,
     distancesMatrix: problem.distancesMatrix,
   });
 
-  // debugger;
-  // const isDepotsPlacementOk = checkDepotsPlacement({
-  //   routes: solution,
-  // });
   // const isCapacityOk = checkCapacity({
-  //   routes: solution,
+  //   routes: beeSolution,
   //   capacity: problem.capacity,
   //   demands: problem.demands,
+  //   isNotMuted: true,
   // });
   // const isAllLocationsVisitedOnce = checkAllLocationsVisitedOnce({
-  //   routes: solution,
+  //   routes: beeSolution,
   //   locations: new Array(problem.dimension - 1).fill(0).map((_, i) => i + 1),
   // });
+  // // console.log(clarkeSolution);
   console.log('Clarke best:');
-  console.log({
-    distance: solution.totalDistanceTraveled,
-    trucks: solution.trucks,
-  });
+  console.log(
+    getSolutionTotalDistanceFlat({
+      solution: clarkeSolution,
+      distancesMatrix: problem.distancesMatrix,
+    })
+  );
+  // const clarkeRoutes = structuredClone(clarkeSolution.routes);
+  // clarkeRoutes.forEach((route) => {
+  //   route.pop();
+  //   route.shift();
+  // });
+  // debugger;
+  // const isDepotsPlacementOk = checkDepotsPlacement({
+  //   routes: beeSolution.routes,
+  // });
+  // console.log('Clarke best:');
+  // console.log({
+  //   distance: clarkeSolution.totalDistanceTraveled,
+  //   trucks: clarkeSolution.trucks,
+  // });
 };
 
 main();

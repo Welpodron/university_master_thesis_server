@@ -240,35 +240,39 @@ export const clarkeWrightSavingsAlgorithm = ({
     // }
   }
   // Добавляем к каждому маршруту начальную и конечную точку депо
-  for (const route of routes) {
-    route.unshift(0);
-    route.push(0);
-    // Для каждого маршрута в самом конце считаем его стоимость
-    for (let i = 0; i < route.length - 1; i++) {
-      const node1 = route[i];
-      const node2 = route[i + 1];
-      // route.cost += distancesMatrix[node1][node2];
-    }
-  }
+  // for (const route of routes) {
+  //   route.unshift(0);
+  //   route.push(0);
+  //   // Для каждого маршрута в самом конце считаем его стоимость
+  //   // for (let i = 0; i < route.length - 1; i++) {
+  //   //   const node1 = route[i];
+  //   //   const node2 = route[i + 1];
+  //   //   // route.cost += distancesMatrix[node1][node2];
+  //   // }
+  // }
 
   // calculate trucks and distance
-  let totalDistanceTraveled = 0;
+  // let totalDistanceTraveled = 0;
 
-  routes.forEach((route) => {
-    for (let i = 0; i < route.length - 1; i++) {
-      totalDistanceTraveled += distancesMatrix[route[i]][route[i + 1]];
+  // routes.forEach((route) => {
+  //   for (let i = 0; i < route.length - 1; i++) {
+  //     totalDistanceTraveled += distancesMatrix[route[i]][route[i + 1]];
+  //   }
+  // });
+
+  // const end = performance.now();
+
+  // console.log(`[CLARKE] Execution time: ${end - start} ms`);
+  const flat = [0];
+
+  for (let route of routes) {
+    for (let node of route) {
+      flat.push(node);
     }
-  });
+    flat.push(0);
+  }
 
-  const end = performance.now();
-
-  console.log(`[CLARKE] Execution time: ${end - start} ms`);
-
-  return {
-    routes,
-    totalDistanceTraveled,
-    trucks: routes.length,
-  };
+  return flat;
 };
 
 // const clarkeDataDistances = [

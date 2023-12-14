@@ -1,4 +1,4 @@
-import { getRouteCapacity } from "./utils";
+import { getRouteCapacity } from './utils';
 
 export const checkDepotsPlacement = ({
   routes,
@@ -12,9 +12,9 @@ export const checkDepotsPlacement = ({
     let depotCount = 0;
 
     if (route[0] !== depotValue || route[route.length - 1] !== depotValue) {
-      console.log(
-        `ПРОВЕРКА ОГРАНИЧЕНИЙ РЕШЕНИЯ (ПРОВАЛ): Начало и конец маршрута [${route.join()}] должны быть равны ${depotValue} (начинаться и заканчиваться в депо)`
-      );
+      // console.log(
+      //   `ПРОВЕРКА ОГРАНИЧЕНИЙ РЕШЕНИЯ (ПРОВАЛ): Начало и конец маршрута [${route.join()}] должны быть равны ${depotValue} (начинаться и заканчиваться в депо)`
+      // );
       return false;
     }
 
@@ -23,13 +23,13 @@ export const checkDepotsPlacement = ({
     }
 
     if (depotCount !== 2) {
-      console.log(
-        `ПРОВЕРКА ОГРАНИЧЕНИЙ РЕШЕНИЯ (ПРОВАЛ): В маршруте [${route.join()}] количество депо не равно 2`
-      );
+      // console.log(
+      //   `ПРОВЕРКА ОГРАНИЧЕНИЙ РЕШЕНИЯ (ПРОВАЛ): В маршруте [${route.join()}] количество депо не равно 2`
+      // );
       return false;
     }
   }
-  console.log(`ПРОВЕРКА ОГРАНИЧЕНИЙ РЕШЕНИЯ: Проверка депо успешно пройдена`);
+  // console.log(`ПРОВЕРКА ОГРАНИЧЕНИЙ РЕШЕНИЯ: Проверка депо успешно пройдена`);
   return true;
 };
 
@@ -37,24 +37,31 @@ export const checkCapacity = ({
   routes,
   capacity,
   demands,
+  isNotMuted = false,
 }: {
   routes: number[][];
   capacity: number;
   demands: number[];
+  isNotMuted?: boolean;
 }) => {
   //! Проверка на вместимость маршрута
   for (const route of routes) {
     const routeCapacity = getRouteCapacity({ route, demands });
     if (routeCapacity > capacity) {
-      console.log(
-        `ПРОВЕРКА ОГРАНИЧЕНИЙ РЕШЕНИЯ (ПРОВАЛ): Вместимость маршрута [${route.join()}] превышает ограничение вместимости ${capacity}`
-      );
+      if (isNotMuted) {
+        console.log(
+          `ПРОВЕРКА ОГРАНИЧЕНИЙ РЕШЕНИЯ (ПРОВАЛ): Вместимость маршрута [${route.join()}] превышает ограничение вместимости ${capacity}`
+        );
+      }
+
       return false;
     }
   }
-  console.log(
-    `ПРОВЕРКА ОГРАНИЧЕНИЙ РЕШЕНИЯ: Проверка на вместимость маршрута успешно пройдена`
-  );
+  if (isNotMuted) {
+    console.log(
+      `ПРОВЕРКА ОГРАНИЧЕНИЙ РЕШЕНИЯ: Проверка на вместимость маршрута успешно пройдена`
+    );
+  }
   return true;
 };
 

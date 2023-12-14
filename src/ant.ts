@@ -76,6 +76,11 @@ const chooseNextNodeAccordingToProbability = ({
     probability: number;
   }[];
 }) => {
+  // Пока что прост вернем nodeIndex с самой большой вероятностью
+  // return nodesWithProbabilities.reduce((prev, current) =>
+  //   prev.probability > current.probability ? prev : current
+  // ).nodeIndex;
+
   // Calculate the total sum of all the probabilities
   const totalSum = nodesWithProbabilities.reduce(
     (sum, node) => sum + node.probability,
@@ -240,7 +245,7 @@ class Colony {
   }: {
     generation: number;
     pheromoneMatrix: number[][];
-    currentBestSolution: { distance: number; ants: number };
+    currentBestSolution: { distance: number; ants: number; routes: number[][] };
     solutionsByGenerations: { distance: number; generation: number }[];
   }) => {
     //! Идеалогически с каждой новой генерацией количество муравьев в колонии
@@ -289,6 +294,10 @@ class Colony {
           ant,
         });
       }
+
+      //! Возвращаемся в депо
+      ant.currentDistanceTraveled +=
+        this.problem.distancesMatrix[ant.currentNodeIndex][0];
 
       // const clone = structuredClone(probabilities);
       // sort by probability
@@ -377,6 +386,11 @@ class Colony {
 
       currentBestSolution.distance = totalDistanceTraveled;
       currentBestSolution.ants = this.ants.length;
+      currentBestSolution.routes = this.ants.map((ant) => [
+        0,
+        ...ant.currentRoute,
+        0,
+      ]);
     }
   };
 }
@@ -390,16 +404,21 @@ export const ant = ({ problem }: { problem: ProblemType }) => {
   const solutionsByGenerations: { distance: number; generation: number }[] = [];
 
   let currentGeneration = 0;
-  const maxGenerations = 150;
+  const maxGenerations = 300;
   const maxNumbersOfColonies = 5;
 
   const pheromoneMatrix = problem.distancesMatrix.map((row) =>
     row.map((_) => 2.0)
   );
 
-  const currentBestSolution = {
+  const currentBestSolution: {
+    distance: number;
+    ants: number;
+    routes: number[][];
+  } = {
     distance: Infinity,
     ants: Infinity,
+    routes: [],
   };
 
   //   const maxAntsPerColony = maxGenerations;
@@ -443,95 +462,95 @@ export const ant = ({ problem }: { problem: ProblemType }) => {
   //! SAVE SOLUTIONS BY GENERATIONS in ANT.json file
   // writeFileSync('ANT.json', JSON.stringify(solutionsByGenerations));
 
-  const width = 1000;
-  const height = 500;
-  const marginTop = 20;
-  const marginRight = 30;
-  const marginBottom = 30;
-  const marginLeft = 40;
+  // const width = 1000;
+  // const height = 500;
+  // const marginTop = 20;
+  // const marginRight = 30;
+  // const marginBottom = 30;
+  // const marginLeft = 40;
 
-  const dom = new JSDOM(`<!DOCTYPE html><body></body>`);
+  // const dom = new JSDOM(`<!DOCTYPE html><body></body>`);
 
-  import('d3').then((d3) => {
-    let body = d3.select(dom.window.document.querySelector('body'));
+  // import('d3').then((d3) => {
+  //   let body = d3.select(dom.window.document.querySelector('body'));
 
-    // Declare the x (horizontal position) scale.
-    const x = d3.scaleUtc(
-      d3.extent(solutionsByGenerations, (d) => d.generation) as [
-        number,
-        number
-      ],
-      [marginLeft, width - marginRight]
-    );
+  //   // Declare the x (horizontal position) scale.
+  //   const x = d3.scaleUtc(
+  //     d3.extent(solutionsByGenerations, (d) => d.generation) as [
+  //       number,
+  //       number
+  //     ],
+  //     [marginLeft, width - marginRight]
+  //   );
 
-    // Declare the y (vertical position) scale.
-    const y = d3.scaleLinear(
-      [
-        Math.ceil(problem.optimal),
-        (d3.max(solutionsByGenerations, (d) => d.distance) as number) + 100.0,
-      ] as [number, number],
-      [height - marginBottom, marginTop]
-    );
+  //   // Declare the y (vertical position) scale.
+  //   const y = d3.scaleLinear(
+  //     [
+  //       Math.ceil(problem.optimal),
+  //       (d3.max(solutionsByGenerations, (d) => d.distance) as number) + 100.0,
+  //     ] as [number, number],
+  //     [height - marginBottom, marginTop]
+  //   );
 
-    // Declare the line generator.
-    const line = d3
-      .line()
-      .x((d) => x((d as any).generation))
-      .y((d) => y((d as any).distance));
+  //   // Declare the line generator.
+  //   const line = d3
+  //     .line()
+  //     .x((d) => x((d as any).generation))
+  //     .y((d) => y((d as any).distance));
 
-    // Create the SVG container.
-    const svg = body
-      .append('svg')
-      .attr('xmlns', 'http://www.w3.org/2000/svg')
-      .attr('xmlns:xlink', 'http://www.w3.org/1999/xlink')
-      .attr('width', width)
-      .attr('height', height)
-      .attr('viewBox', [0, 0, width, height])
-      .attr('style', 'max-width: 100%; height: auto; height: intrinsic;');
+  //   // Create the SVG container.
+  //   const svg = body
+  //     .append('svg')
+  //     .attr('xmlns', 'http://www.w3.org/2000/svg')
+  //     .attr('xmlns:xlink', 'http://www.w3.org/1999/xlink')
+  //     .attr('width', width)
+  //     .attr('height', height)
+  //     .attr('viewBox', [0, 0, width, height])
+  //     .attr('style', 'max-width: 100%; height: auto; height: intrinsic;');
 
-    // Add the x-axis.
-    svg
-      .append('g')
-      .attr('transform', `translate(0,${height - marginBottom})`)
-      .call(
-        d3
-          .axisBottom(x)
-          .ticks(width / 80)
-          .tickSizeOuter(0)
-      );
+  //   // Add the x-axis.
+  //   svg
+  //     .append('g')
+  //     .attr('transform', `translate(0,${height - marginBottom})`)
+  //     .call(
+  //       d3
+  //         .axisBottom(x)
+  //         .ticks(width / 80)
+  //         .tickSizeOuter(0)
+  //     );
 
-    // Add the y-axis, remove the domain line, add grid lines and a label.
-    svg
-      .append('g')
-      .attr('transform', `translate(${marginLeft},0)`)
-      .call(d3.axisLeft(y).ticks(height / 40))
-      .call((g) => g.select('.domain').remove())
-      .call((g) =>
-        g
-          .selectAll('.tick line')
-          .clone()
-          .attr('x2', width - marginLeft - marginRight)
-          .attr('stroke-opacity', 0.1)
-      )
-      .call((g) =>
-        g
-          .append('text')
-          .attr('x', -marginLeft)
-          .attr('y', 10)
-          .attr('fill', 'currentColor')
-          .attr('text-anchor', 'start')
-          .text('↑ Daily close ($)')
-      );
+  //   // Add the y-axis, remove the domain line, add grid lines and a label.
+  //   svg
+  //     .append('g')
+  //     .attr('transform', `translate(${marginLeft},0)`)
+  //     .call(d3.axisLeft(y).ticks(height / 40))
+  //     .call((g) => g.select('.domain').remove())
+  //     .call((g) =>
+  //       g
+  //         .selectAll('.tick line')
+  //         .clone()
+  //         .attr('x2', width - marginLeft - marginRight)
+  //         .attr('stroke-opacity', 0.1)
+  //     )
+  //     .call((g) =>
+  //       g
+  //         .append('text')
+  //         .attr('x', -marginLeft)
+  //         .attr('y', 10)
+  //         .attr('fill', 'currentColor')
+  //         .attr('text-anchor', 'start')
+  //         .text('↑ Daily close ($)')
+  //     );
 
-    svg
-      .append('path')
-      .attr('fill', 'none')
-      .attr('stroke', 'steelblue')
-      .attr('stroke-width', 1.5)
-      .attr('d', line(solutionsByGenerations as any));
+  //   svg
+  //     .append('path')
+  //     .attr('fill', 'none')
+  //     .attr('stroke', 'steelblue')
+  //     .attr('stroke-width', 1.5)
+  //     .attr('d', line(solutionsByGenerations as any));
 
-    writeFileSync('out.svg', body.html());
-  });
+  //   writeFileSync('out.svg', body.html());
+  // });
 
   // Best solution so far
   console.log('Ant best:');
@@ -539,7 +558,8 @@ export const ant = ({ problem }: { problem: ProblemType }) => {
   console.log({
     distance: currentBestSolution.distance,
     ants: currentBestSolution.ants,
+    // routes: currentBestSolution.routes,
   });
 
-  debugger;
+  return currentBestSolution;
 };
