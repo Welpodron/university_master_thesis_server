@@ -1,11 +1,11 @@
-import fs from "fs/promises";
-import path from "path";
+import fs from 'fs/promises';
+import path from 'path';
 
-const LOG_PATH = "./log.log";
+const LOG_PATH = './log.log';
 
 export const log = async ({
   message,
-  code = "INFO",
+  code = 'INFO',
 }: {
   message: any;
   code?: string;
