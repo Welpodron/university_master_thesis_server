@@ -457,7 +457,7 @@ export const ant = ({ problem }: { problem: ProblemType }) => {
 
   const end = performance.now();
 
-  console.log(`[ANT] Execution time: ${end - start} ms`);
+  // console.log(`[ANT] Execution time: ${end - start} ms`);
 
   //! SAVE SOLUTIONS BY GENERATIONS in ANT.json file
   // writeFileSync('ANT.json', JSON.stringify(solutionsByGenerations));
@@ -553,13 +553,17 @@ export const ant = ({ problem }: { problem: ProblemType }) => {
   // });
 
   // Best solution so far
-  console.log('Ant best:');
+  // console.log('Ant best:');
   // Best solution so far
-  console.log({
-    distance: currentBestSolution.distance,
-    ants: currentBestSolution.ants,
-    // routes: currentBestSolution.routes,
-  });
+  // console.log({
+  //   distance: currentBestSolution.distance,
+  //   ants: currentBestSolution.ants,
+  //   // routes: currentBestSolution.routes,
+  // });
 
-  return currentBestSolution;
+  return currentBestSolution.distance;
+
+  // return {
+  //   solutionsByGenerations,
+  // };
 };

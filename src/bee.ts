@@ -67,7 +67,13 @@ export const getRoulette = ({ fitnesses }: { fitnesses: number[] }) => {
   throw new Error('getFitnessBasedRouletteWheelSelectionSolutionIndex');
 };
 
-export const bee = async ({ problem }: { problem: ProblemType }) => {
+export const bee = async ({
+  problem,
+  useClarke = true,
+}: {
+  problem: ProblemType;
+  useClarke?: boolean;
+}) => {
   // TODO: Реализовать многопоточность
   //! x ТУТ это массив решений solutions: Randomly generate a set of solutions as initial food source
   const solutions: number[][] = [];
@@ -81,14 +87,19 @@ export const bee = async ({ problem }: { problem: ProblemType }) => {
     distancesMatrix: problem.distancesMatrix,
   });
 
+  const solutionsByGenerations: { distance: number; generation: number }[] = [];
+
   for (let i = 0; i < tau; i++) {
-    // let generatedSolution = generativeSolution(problem);
-    // while (!generatedSolution) {
-    //   generatedSolution = generativeSolution(problem);
-    // }
-    // solutions.push(generatedSolution);
-    // CLARKE WRIGHT SOLUTIONS
-    solutions.push(structuredClone(CLARKE_CACHED));
+    if (useClarke) {
+      // CLARKE WRIGHT SOLUTIONS
+      solutions.push(structuredClone(CLARKE_CACHED));
+    } else {
+      let generatedSolution = generativeSolution(problem);
+      while (!generatedSolution) {
+        generatedSolution = generativeSolution(problem);
+      }
+      solutions.push(generatedSolution);
+    }
   }
 
   // ! fitnesses это массив значений пригодности решений
@@ -97,7 +108,7 @@ export const bee = async ({ problem }: { problem: ProblemType }) => {
   const counters = new Array(solutions.length).fill(0);
 
   let v = 0;
-  const maxIterations = problem.dimension > 100 ? 300 : 1300;
+  const maxIterations = problem.dimension > 100 ? 300 : 300;
 
   const onlookers = 5;
 
@@ -307,6 +318,53 @@ export const bee = async ({ problem }: { problem: ProblemType }) => {
       alpha += delta;
     }
 
+    // let bestIndex = -1;
+    // let bestFitness = -Infinity;
+
+    // for (let i = 0; i < solutions.length; i++) {
+    //   // const totalDistance = getSolutionTotalDistanceFlat({
+    //   //   solution: solutions[i],
+    //   //   distancesMatrix: problem.distancesMatrix,
+    //   // });
+    //   const solutionFitness = getFitness({
+    //     solution: solutions[i],
+    //     problem,
+    //   });
+    //   if (ONLY_FEASIBLE) {
+    //     if (
+    //       isCapacityOKFlat({
+    //         solution: solutions[i],
+    //         capacity: problem.capacity,
+    //         demands: problem.demands,
+    //       })
+    //     ) {
+    //       if (solutionFitness > bestFitness) {
+    //         bestFitness = solutionFitness;
+    //         bestIndex = i;
+    //       }
+    //     }
+    //   } else {
+    //     if (solutionFitness > bestFitness) {
+    //       bestFitness = solutionFitness;
+    //       bestIndex = i;
+    //     }
+    //   }
+    // }
+
+    // if (bestIndex === -1) {
+    //   throw new Error('bestSolutionIndex === -1');
+    // }
+
+    // let dist = getSolutionTotalDistanceFlat({
+    //   solution: solutions[bestIndex],
+    //   distancesMatrix: problem.distancesMatrix,
+    // });
+
+    // solutionsByGenerations.push({
+    //   distance: dist,
+    //   generation: v,
+    // });
+
     //! Конец раздела e)
     v++;
   }
@@ -361,4 +419,5 @@ export const bee = async ({ problem }: { problem: ProblemType }) => {
   }
 
   return solutions[bestIndex];
+  // return { solutionsByGenerations };
 };

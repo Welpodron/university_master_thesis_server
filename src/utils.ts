@@ -147,6 +147,27 @@ export const getSolutionRoutesCapacitiesFlatMax = ({
   return Math.max(...getSolutionRoutesCapacitiesFlat({ solution, demands }));
 };
 
+/**
+ * ! ВНИМАНИЕ формат решения сильно отличается и имеет вид:
+ * [0, 4, 1, 0, 2, 7, 5, 0]
+ */
+export const getSolutionRoutesFlat = ({ solution }: { solution: number[] }) => {
+  const routes = [];
+  let route = [0];
+
+  for (let i = 1; i < solution.length; i++) {
+    if (solution[i] === 0) {
+      route.push(0);
+      routes.push(route);
+      route = [0];
+    } else {
+      route.push(solution[i]);
+    }
+  }
+
+  return routes;
+};
+
 export const generativeSolution = (
   problem: ProblemType,
   alpha = 0.01,
