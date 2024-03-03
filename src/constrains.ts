@@ -3,18 +3,23 @@ import { getRouteCapacity } from './utils';
 export const checkDepotsPlacement = ({
   routes,
   depotValue = 0,
+  isNotMuted = false,
 }: {
   routes: number[][];
   depotValue?: number;
+  isNotMuted?: boolean;
 }) => {
   //! Начало и конец маршрута должны быть депо, а также их количество в одном маршруте должно быть равно 2
   for (const route of routes) {
     let depotCount = 0;
 
     if (route[0] !== depotValue || route[route.length - 1] !== depotValue) {
-      // console.log(
-      //   `ПРОВЕРКА ОГРАНИЧЕНИЙ РЕШЕНИЯ (ПРОВАЛ): Начало и конец маршрута [${route.join()}] должны быть равны ${depotValue} (начинаться и заканчиваться в депо)`
-      // );
+      if (isNotMuted) {
+        console.log(
+          `ПРОВЕРКА ОГРАНИЧЕНИЙ РЕШЕНИЯ (ПРОВАЛ): Начало и конец маршрута [${route.join()}] должны быть равны ${depotValue} (начинаться и заканчиваться в депо)`
+        );
+      }
+
       return false;
     }
 
@@ -23,13 +28,20 @@ export const checkDepotsPlacement = ({
     }
 
     if (depotCount !== 2) {
-      // console.log(
-      //   `ПРОВЕРКА ОГРАНИЧЕНИЙ РЕШЕНИЯ (ПРОВАЛ): В маршруте [${route.join()}] количество депо не равно 2`
-      // );
+      if (isNotMuted) {
+        console.log(
+          `ПРОВЕРКА ОГРАНИЧЕНИЙ РЕШЕНИЯ (ПРОВАЛ): В маршруте [${route.join()}] количество депо не равно 2`
+        );
+      }
+
       return false;
     }
   }
-  // console.log(`ПРОВЕРКА ОГРАНИЧЕНИЙ РЕШЕНИЯ: Проверка депо успешно пройдена`);
+
+  if (isNotMuted) {
+    console.log(`ПРОВЕРКА ОГРАНИЧЕНИЙ РЕШЕНИЯ: Проверка депо успешно пройдена`);
+  }
+
   return true;
 };
 
@@ -69,10 +81,12 @@ export const checkAllLocationsVisitedOnce = ({
   routes,
   locations,
   depotValue = 0,
+  isNotMuted = false,
 }: {
   routes: number[][];
   locations: number[];
   depotValue?: number;
+  isNotMuted?: boolean;
 }) => {
   const _locations = new Map<number, number>();
   //! Проверка что все точки посещены ровно один раз (нет дубликатов и прочее)
@@ -80,9 +94,11 @@ export const checkAllLocationsVisitedOnce = ({
     for (const node of route) {
       if (node === depotValue) continue;
       if (_locations.has(node)) {
-        console.log(
-          `ПРОВЕРКА ОГРАНИЧЕНИЙ РЕШЕНИЯ (ПРОВАЛ): Точка ${node} содержится более одного раза`
-        );
+        if (isNotMuted) {
+          console.log(
+            `ПРОВЕРКА ОГРАНИЧЕНИЙ РЕШЕНИЯ (ПРОВАЛ): Точка ${node} содержится более одного раза`
+          );
+        }
         return false;
       } else {
         _locations.set(node, 1);
@@ -91,15 +107,20 @@ export const checkAllLocationsVisitedOnce = ({
   }
   for (const location of locations) {
     if (!_locations.has(location)) {
-      console.log(
-        `ПРОВЕРКА ОГРАНИЧЕНИЙ РЕШЕНИЯ (ПРОВАЛ): Точка ${location} не содержится в маршрутах`
-      );
+      if (isNotMuted) {
+        console.log(
+          `ПРОВЕРКА ОГРАНИЧЕНИЙ РЕШЕНИЯ (ПРОВАЛ): Точка ${location} не содержится в маршрутах`
+        );
+      }
       return false;
     }
   }
 
-  console.log(
-    `ПРОВЕРКА ОГРАНИЧЕНИЙ РЕШЕНИЯ: Проверка что все точки посещены ровно один раз успешно пройдена`
-  );
+  if (isNotMuted) {
+    console.log(
+      `ПРОВЕРКА ОГРАНИЧЕНИЙ РЕШЕНИЯ: Проверка что все точки посещены ровно один раз успешно пройдена`
+    );
+  }
+
   return true;
 };

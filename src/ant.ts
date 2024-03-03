@@ -1,7 +1,4 @@
-import { writeFileSync } from 'fs';
 import { ProblemType } from './reader';
-import { JSDOM } from 'jsdom';
-// import d3 from 'd3';
 
 //! Выполняется ДО расчета вероятностей чтобы по сути отобрать кандидатов на следующую точку ИЛИ же сразу вернутся в депо
 const getNextPossibleNodesForAnt = ({
@@ -423,8 +420,6 @@ export const ant = ({ problem }: { problem: ProblemType }) => {
 
   //   const maxAntsPerColony = maxGenerations;
 
-  const start = performance.now();
-
   while (currentGeneration < maxGenerations) {
     for (let i = 0; i < maxNumbersOfColonies; i++) {
       const colony = new Colony({
@@ -455,115 +450,5 @@ export const ant = ({ problem }: { problem: ProblemType }) => {
     currentGeneration++;
   }
 
-  const end = performance.now();
-
-  // console.log(`[ANT] Execution time: ${end - start} ms`);
-
-  //! SAVE SOLUTIONS BY GENERATIONS in ANT.json file
-  // writeFileSync('ANT.json', JSON.stringify(solutionsByGenerations));
-
-  // const width = 1000;
-  // const height = 500;
-  // const marginTop = 20;
-  // const marginRight = 30;
-  // const marginBottom = 30;
-  // const marginLeft = 40;
-
-  // const dom = new JSDOM(`<!DOCTYPE html><body></body>`);
-
-  // import('d3').then((d3) => {
-  //   let body = d3.select(dom.window.document.querySelector('body'));
-
-  //   // Declare the x (horizontal position) scale.
-  //   const x = d3.scaleUtc(
-  //     d3.extent(solutionsByGenerations, (d) => d.generation) as [
-  //       number,
-  //       number
-  //     ],
-  //     [marginLeft, width - marginRight]
-  //   );
-
-  //   // Declare the y (vertical position) scale.
-  //   const y = d3.scaleLinear(
-  //     [
-  //       Math.ceil(problem.optimal),
-  //       (d3.max(solutionsByGenerations, (d) => d.distance) as number) + 100.0,
-  //     ] as [number, number],
-  //     [height - marginBottom, marginTop]
-  //   );
-
-  //   // Declare the line generator.
-  //   const line = d3
-  //     .line()
-  //     .x((d) => x((d as any).generation))
-  //     .y((d) => y((d as any).distance));
-
-  //   // Create the SVG container.
-  //   const svg = body
-  //     .append('svg')
-  //     .attr('xmlns', 'http://www.w3.org/2000/svg')
-  //     .attr('xmlns:xlink', 'http://www.w3.org/1999/xlink')
-  //     .attr('width', width)
-  //     .attr('height', height)
-  //     .attr('viewBox', [0, 0, width, height])
-  //     .attr('style', 'max-width: 100%; height: auto; height: intrinsic;');
-
-  //   // Add the x-axis.
-  //   svg
-  //     .append('g')
-  //     .attr('transform', `translate(0,${height - marginBottom})`)
-  //     .call(
-  //       d3
-  //         .axisBottom(x)
-  //         .ticks(width / 80)
-  //         .tickSizeOuter(0)
-  //     );
-
-  //   // Add the y-axis, remove the domain line, add grid lines and a label.
-  //   svg
-  //     .append('g')
-  //     .attr('transform', `translate(${marginLeft},0)`)
-  //     .call(d3.axisLeft(y).ticks(height / 40))
-  //     .call((g) => g.select('.domain').remove())
-  //     .call((g) =>
-  //       g
-  //         .selectAll('.tick line')
-  //         .clone()
-  //         .attr('x2', width - marginLeft - marginRight)
-  //         .attr('stroke-opacity', 0.1)
-  //     )
-  //     .call((g) =>
-  //       g
-  //         .append('text')
-  //         .attr('x', -marginLeft)
-  //         .attr('y', 10)
-  //         .attr('fill', 'currentColor')
-  //         .attr('text-anchor', 'start')
-  //         .text('↑ Daily close ($)')
-  //     );
-
-  //   svg
-  //     .append('path')
-  //     .attr('fill', 'none')
-  //     .attr('stroke', 'steelblue')
-  //     .attr('stroke-width', 1.5)
-  //     .attr('d', line(solutionsByGenerations as any));
-
-  //   writeFileSync('out.svg', body.html());
-  // });
-
-  // Best solution so far
-  // console.log('Ant best:');
-  // Best solution so far
-  // console.log({
-  //   distance: currentBestSolution.distance,
-  //   ants: currentBestSolution.ants,
-  //   // routes: currentBestSolution.routes,
-  // });
-
   return currentBestSolution.distance;
-
-  // return {
-  //   solutionsByGenerations,
-  // };
 };

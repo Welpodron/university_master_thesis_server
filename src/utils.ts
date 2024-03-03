@@ -1,6 +1,12 @@
 import { isCapacityOKFlat } from './_constrains';
 import { ProblemType } from './reader';
 
+export const sleep = ({ ms }: { ms: number }) => {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(1), ms);
+  });
+};
+
 export const getRouteCapacity = ({
   route,
   demands,

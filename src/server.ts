@@ -1,7 +1,22 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 
+import fs from 'fs/promises';
+
 import express from 'express';
 import cors from 'cors';
+import { getDistanceWithOpenRouteService } from './pather';
+import {
+  getSolutionRoutesFlat,
+  getSolutionTotalDistanceFlat,
+  sleep,
+} from './utils';
+import { ProblemType } from './reader';
+import { bee } from './bee';
+import {
+  checkAllLocationsVisitedOnce,
+  checkCapacity,
+  checkDepotsPlacement,
+} from './constrains';
 
 const prisma = new PrismaClient();
 const app = express();
@@ -121,6 +136,218 @@ app.delete('/task', async (req, res) => {
     res.json(posts);
   } catch (error) {
     res.status(400).json((error as Error).message);
+  }
+});
+
+app.get('/cache', async (req, res) => {
+  try {
+    const depot = {
+      id: -1,
+      latitude: 55.746081,
+      longitude: 37.887085,
+      demand: -1,
+    };
+
+    const tasks = await prisma.task.findMany();
+
+    if (!tasks.length) {
+      return;
+    }
+
+    tasks.unshift(depot);
+
+    let cache: {
+      startId: number;
+      endId: number;
+      distance: number;
+    }[] = [];
+
+    try {
+      const buffer = await fs.readFile('./_cache');
+
+      let data = buffer.toString().trim();
+
+      if (data.length) {
+        cache = JSON.parse(data);
+      }
+    } catch (_) {
+      console.log('Cache file was not found or corrupted');
+    }
+
+    for (let i = 0; i < tasks.length; i++) {
+      for (let j = i + 1; j < tasks.length; j++) {
+        if (
+          cache.some(
+            (data) =>
+              (data.startId == tasks[i].id && data.endId == tasks[j].id) ||
+              (data.endId == tasks[i].id && data.startId == tasks[j].id)
+          )
+        ) {
+          continue;
+        }
+
+        try {
+          await sleep({ ms: 2500 });
+
+          console.log(`Fetching path from: ${tasks[i].id} to: ${tasks[j].id}`);
+
+          const distance = await getDistanceWithOpenRouteService({
+            startPoint: {
+              latitude: tasks[i].latitude,
+              longitude: tasks[i].longitude,
+            },
+            endPoint: {
+              latitude: tasks[j].latitude,
+              longitude: tasks[j].longitude,
+            },
+          });
+
+          cache.push({
+            startId: tasks[i].id,
+            endId: tasks[j].id,
+            distance,
+          });
+        } catch (error) {
+          console.error(error);
+        }
+      }
+    }
+
+    await fs.writeFile('./_cache', JSON.stringify(cache));
+
+    res.json(cache);
+  } catch (error) {
+    res.status(500).json((error as Error).message);
+  }
+});
+
+app.get('/cvrp', async (req, res) => {
+  try {
+    const depot = {
+      id: -1,
+      latitude: 55.746081,
+      longitude: 37.887085,
+      demand: 0,
+    };
+
+    const tasks = await prisma.task.findMany();
+
+    if (!tasks.length) {
+      return;
+    }
+
+    tasks.unshift(depot);
+
+    let cache: {
+      startId: number;
+      endId: number;
+      distance: number;
+    }[] = [];
+
+    try {
+      const buffer = await fs.readFile('./_cache');
+
+      let data = buffer.toString().trim();
+
+      if (data.length) {
+        cache = JSON.parse(data);
+      }
+    } catch (_) {
+      throw new Error('Cache file was not found or corrupted');
+    }
+
+    const distancesMatrix: number[][] = [];
+
+    const nodesMap: Record<string, number> = {};
+
+    const demands: number[] = [];
+
+    for (let i = 0; i < tasks.length; i++) {
+      if (
+        tasks[i].latitude &&
+        tasks[i].longitude &&
+        (tasks[i].demand || tasks[i].id === -1)
+      ) {
+        if (
+          !cache.some(
+            (data) => data.startId == tasks[i].id || data.endId == tasks[i].id
+          )
+        ) {
+          // Task was not found inside cache
+          console.log(`Path was not found for task with id: ${tasks[i].id}`);
+          continue;
+        }
+
+        // row structure: [endForSome,endForSome,0,startForSome,startForSome]
+
+        const end = cache
+          .filter((data) => data.endId == tasks[i].id)
+          .map((data) => data.distance);
+        const start = cache
+          .filter((data) => data.startId == tasks[i].id)
+          .map((data) => data.distance);
+
+        const row = [...end, 0, ...start];
+
+        nodesMap[i] = tasks[i].id;
+
+        distancesMatrix.push(row);
+
+        demands.push(tasks[i].demand);
+      }
+    }
+
+    //! TODO: На оч больших capacity алгоритм ломается ?????
+    const problem: ProblemType = {
+      author: '',
+      name: '',
+      type: 'unique',
+      edgeWeightType: 'unique',
+      distancesMatrix,
+      coords: [],
+      demands,
+      capacity: 18000,
+      dimension: distancesMatrix.length,
+      trucks: 5,
+      optimal: Infinity,
+    };
+
+    const beeClarke = await bee({ problem, useClarke: true });
+
+    const solution = getSolutionRoutesFlat({ solution: beeClarke });
+
+    checkDepotsPlacement({
+      routes: solution,
+      isNotMuted: true,
+    });
+
+    checkAllLocationsVisitedOnce({
+      routes: solution,
+      locations: tasks.map((_, i) => i).filter((i) => i !== 0),
+      isNotMuted: true,
+    });
+
+    checkCapacity({
+      routes: solution,
+      capacity: problem.capacity,
+      demands,
+      isNotMuted: true,
+    });
+
+    const _beeClarkeCost = getSolutionTotalDistanceFlat({
+      solution: beeClarke,
+      distancesMatrix: problem.distancesMatrix,
+    });
+
+    res.send({
+      solution: solution,
+      cost: _beeClarkeCost,
+      capacity: problem.capacity,
+      trucks: problem.trucks,
+      iteration: 300,
+    });
+  } catch (error) {
+    res.status(500).json((error as Error).message);
   }
 });
 

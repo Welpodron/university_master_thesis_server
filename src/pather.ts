@@ -1,5 +1,4 @@
-// import fetch from "node-fetch";
-import { CONFIG } from "./config";
+import { CONFIG } from './config';
 
 export type EarthPointType = {
   latitude: number;
