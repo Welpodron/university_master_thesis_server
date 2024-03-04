@@ -18,11 +18,15 @@ import {
   checkDepotsPlacement,
 } from './constrains';
 
+import { hook, notify } from './_debugger';
+
 const prisma = new PrismaClient();
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+app.get('/_debug', hook);
 
 app.get('/tasks', async (req, res) => {
   try {
@@ -244,6 +248,8 @@ app.get('/cvrp', async (req, res) => {
       distance: number;
     }[] = [];
 
+    notify('Getting cache');
+
     try {
       const buffer = await fs.readFile('./_cache');
 
@@ -254,8 +260,13 @@ app.get('/cvrp', async (req, res) => {
       }
     } catch (error) {
       console.error(error);
+
+      notify(error);
+
       throw new Error('Cache file was not found or corrupted');
     }
+
+    notify('Cache found');
 
     const distancesMatrix: number[][] = [];
 
@@ -313,7 +324,11 @@ app.get('/cvrp', async (req, res) => {
       optimal: Infinity,
     };
 
+    notify('Bee clarke started');
+
     const beeClarke = await bee({ problem, useClarke: true });
+
+    notify('Bee clarke ended');
 
     const mappedSolution = beeClarke.map((i) =>
       nodesMap[i] == -1 ? 0 : nodesMap[i]
