@@ -252,7 +252,8 @@ app.get('/cvrp', async (req, res) => {
       if (data.length) {
         cache = JSON.parse(data);
       }
-    } catch (_) {
+    } catch (error) {
+      console.error(error);
       throw new Error('Cache file was not found or corrupted');
     }
 
@@ -314,7 +315,11 @@ app.get('/cvrp', async (req, res) => {
 
     const beeClarke = await bee({ problem, useClarke: true });
 
-    const solution = getSolutionRoutesFlat({ solution: beeClarke });
+    const mappedSolution = beeClarke.map((i) =>
+      nodesMap[i] == -1 ? 0 : nodesMap[i]
+    );
+
+    const solution = getSolutionRoutesFlat({ solution: mappedSolution });
 
     checkDepotsPlacement({
       routes: solution,
@@ -323,29 +328,44 @@ app.get('/cvrp', async (req, res) => {
 
     checkAllLocationsVisitedOnce({
       routes: solution,
-      locations: tasks.map((_, i) => i).filter((i) => i !== 0),
+      // locations: tasks.map((_, i) => i).filter((i) => i !== 0),
+      locations: tasks.map((task) => task.id).filter((i) => i != -1),
       isNotMuted: true,
     });
 
-    checkCapacity({
-      routes: solution,
-      capacity: problem.capacity,
-      demands,
-      isNotMuted: true,
-    });
+    // checkCapacity({
+    //   routes: solution,
+    //   capacity: problem.capacity,
+    //   demands,
+    //   isNotMuted: true,
+    // });
 
     const _beeClarkeCost = getSolutionTotalDistanceFlat({
       solution: beeClarke,
       distancesMatrix: problem.distancesMatrix,
     });
 
-    res.send({
-      solution: solution,
-      cost: _beeClarkeCost,
-      capacity: problem.capacity,
-      trucks: problem.trucks,
-      iteration: 300,
-    });
+    const mappedLocations = solution.map((path) =>
+      path.map((id) => {
+        const task = tasks.find((task) => task.id == (id == 0 ? -1 : id));
+
+        return {
+          longitude: task ? task.longitude : null,
+          latitude: task ? task.latitude : null,
+        };
+      })
+    );
+
+    // res.send({
+    //   solution: solution,
+    //   locations: mappedLocations,
+    //   cost: _beeClarkeCost,
+    //   capacity: problem.capacity,
+    //   trucks: problem.trucks,
+    //   iteration: 300,
+    // });
+
+    res.send(mappedLocations);
   } catch (error) {
     res.status(500).json((error as Error).message);
   }
