@@ -1,0 +1,6 @@
+-- CreateTable
+CREATE TABLE "Job" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "date" DATETIME NOT NULL,
+    "completed" BOOLEAN NOT NULL DEFAULT false
+);

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import readline from 'readline';
 import { resolve } from 'path';
-import { getDistanceEuclidean, getDistanceManhattan } from './pather';
+import { getDistanceEuclidean, getDistanceManhattan } from '../pather';
 // import { getDistanceEuclidean, getDistanceManhattan } from "./math";
 
 export type ProblemType = {
@@ -13,6 +13,7 @@ export type ProblemType = {
   coords: { x: number; y: number }[];
   demands: number[];
   capacity: number;
+  capacities: number[];
   dimension: number;
   trucks: number;
   optimal: number;
@@ -34,6 +35,7 @@ export const getProblem = async ({ path }: { path: string }) => {
     distancesMatrix: [],
     coords: [],
     demands: [],
+    capacities: [],
     capacity: 0,
     dimension: 0,
     trucks: 0,

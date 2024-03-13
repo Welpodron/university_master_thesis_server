@@ -4,7 +4,7 @@ import {
   getTwoDistinctRandomNumbersInRange,
   getRandomElementFromArrayWithoutFirstAndLast,
   getRandomElementFromArray,
-} from "./random";
+} from '../random';
 
 export const randomSwap = ({
   _solution,
@@ -33,7 +33,7 @@ export const randomSwap = ({
   }
 
   if (verbose) {
-    console.log("ПРИМЕНЕНИЕ ОПЕРАТОРА: randomSwap");
+    console.log('ПРИМЕНЕНИЕ ОПЕРАТОРА: randomSwap');
   }
 
   while (patience > 0) {
@@ -203,7 +203,7 @@ export const randomSwapFlat = ({
   const solution = [..._solution];
 
   if (verbose) {
-    console.log("ПРИМЕНЕНИЕ ОПЕРАТОРА: randomSwap");
+    console.log('ПРИМЕНЕНИЕ ОПЕРАТОРА: randomSwap');
   }
 
   while (patience > 0) {

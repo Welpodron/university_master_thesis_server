@@ -5,17 +5,17 @@ import {
   checkAllLocationsVisitedOnce,
   checkCapacity,
   checkDepotsPlacement,
-} from './constrains';
-import { ProblemType } from './reader';
+} from '../constrains';
+import { ProblemType } from '../reader';
 import {
   getSolutionTotalDistanceFlat,
   getSolutionRoutesCapacitiesFlatMax,
   generativeSolution,
-} from './utils';
-import { clarkeWrightSavingsAlgorithm } from './clarke';
-import { isCapacityOKFlat } from './_constrains';
+} from '../utils';
+import { isCapacityOKFlat } from '../_constrains';
 import { search } from './local';
 import { random } from './_neighbor';
+import { clarke } from '../CLARKE/_clarke';
 
 // ! x в функции это 1 (i) solution/решение задачи оно представлено в виде массива маршрутов
 export const getFitness = ({
@@ -80,12 +80,7 @@ export const bee = async ({
 
   const tau = problem.dimension;
 
-  const CLARKE_CACHED = clarkeWrightSavingsAlgorithm({
-    nodes: problem.dimension,
-    demands: problem.demands,
-    capacity: problem.capacity,
-    distancesMatrix: problem.distancesMatrix,
-  });
+  const CLARKE_CACHED = clarke(problem);
 
   const solutionsByGenerations: { distance: number; generation: number }[] = [];
 
@@ -219,14 +214,16 @@ export const bee = async ({
               neighs.append(neighbor)
       */
       for (let i = 0; i < neighborhood.length; i++) {
-        if (
-          isCapacityOKFlat({
-            solution: neighbor,
-            capacity: problem.capacity,
-            demands: problem.demands,
-          })
-        ) {
-          neighborhood[i].push([...neighbor]);
+        for (const capacity of problem.capacities) {
+          if (
+            isCapacityOKFlat({
+              solution: neighbor,
+              capacity,
+              demands: problem.demands,
+            })
+          ) {
+            neighborhood[i].push([...neighbor]);
+          }
         }
       }
     }

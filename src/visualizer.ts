@@ -1,6 +1,6 @@
 import { writeFileSync } from 'fs';
 import { JSDOM } from 'jsdom';
-import { ProblemType } from './reader';
+import { ProblemType } from './solvers/reader';
 
 export const createProblemGraph = (coords: { x: number; y: number }[]) => {
   const width = 500;

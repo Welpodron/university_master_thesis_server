@@ -1,4 +1,5 @@
-import { getRouteCapacity } from './utils';
+import { ProblemType } from '../reader';
+import { getRouteCapacity } from '../utils';
 
 const getLinkInfo = ({
   link,
@@ -58,46 +59,18 @@ const mergeRoutes = ({
   return [...route1Temp, ...route2Temp];
 };
 
-// TODO: Реализовать многопоточность
-
-export type ClarkeWrightSavingsAlgorithmPropsType = {
-  nodes: number;
-  demands: number[];
-  capacity: number;
-  distancesMatrix: number[][];
-};
-
-export const clarkeWrightSavingsAlgorithm = ({
-  nodes,
+export const clarke = ({
+  distancesMatrix,
+  dimension,
   demands,
   capacity,
-  distancesMatrix,
-}: ClarkeWrightSavingsAlgorithmPropsType) => {
-  const start = performance.now();
-
+}: ProblemType) => {
   // Calculate savings between each pair of customers
   // index 0 is the depot
   const savings = [];
-  /*
-    for (let row = 0; row < distances.length; row++) {
-      const a = [];
-      for (let column = row; column < distances[0].length; column++) {
-        if (row !== column) {
-          const saving =
-            distancesToDepot[row + 1] +
-            distancesToDepot[column + 1] -
-            distances[column][row];
-          savings.push({ i: row + 1, j: column + 1, saving });
-        }
-        a.push(distances[row][column]);
-        // console.log(distances[row]);
-        // const saving = distances[0][i] + distances[0][j] - distances[i][j];
-      }
-      console.log(a);
-    }
-    */
-  for (let row = 1; row < nodes; row++) {
-    for (let column = row; column < nodes; column++) {
+
+  for (let row = 1; row < dimension; row++) {
+    for (let column = row; column < dimension; column++) {
       if (row !== column) {
         const saving =
           distancesMatrix[0][row] +
@@ -111,7 +84,7 @@ export const clarkeWrightSavingsAlgorithm = ({
   savings.sort((a, b) => b.saving - a.saving);
   // Initialize routes
   const routes = [];
-  const nodeList = new Array(nodes - 1).fill(0).map((_, i) => i + 1);
+  const nodeList = new Array(dimension - 1).fill(0).map((_, i) => i + 1);
   for (const link of savings) {
     const { iRoute, jRoute, counter } = getLinkInfo({ link, routes });
     //! Вариант a. Ни i ни j из link еще ни разу не присутствовали ни в одном маршруте,
@@ -228,7 +201,7 @@ export const clarkeWrightSavingsAlgorithm = ({
   for (const node of nodeList) {
     // Проверяем ограничения на вместимость ????
     // Добавляем каждую оставшуюся точку в новый собственный маршрут
-    routes.push([node]);
+    // routes.push([node]);
     // const isRouteCapacityOk = getRouteCapacity([node], demands) <= capacity;
     // if (isRouteCapacityOk) {
     //   routes.push([node]);
@@ -236,34 +209,11 @@ export const clarkeWrightSavingsAlgorithm = ({
     //   // Ограничения не соблюдены - пропускаем link
     // }
   }
-  // Добавляем к каждому маршруту начальную и конечную точку депо
-  // for (const route of routes) {
-  //   route.unshift(0);
-  //   route.push(0);
-  //   // Для каждого маршрута в самом конце считаем его стоимость
-  //   // for (let i = 0; i < route.length - 1; i++) {
-  //   //   const node1 = route[i];
-  //   //   const node2 = route[i + 1];
-  //   //   // route.cost += distancesMatrix[node1][node2];
-  //   // }
-  // }
 
-  // calculate trucks and distance
-  // let totalDistanceTraveled = 0;
-
-  // routes.forEach((route) => {
-  //   for (let i = 0; i < route.length - 1; i++) {
-  //     totalDistanceTraveled += distancesMatrix[route[i]][route[i + 1]];
-  //   }
-  // });
-
-  // const end = performance.now();
-
-  // console.log(`[CLARKE] Execution time: ${end - start} ms`);
   const flat = [0];
 
-  for (let route of routes) {
-    for (let node of route) {
+  for (const route of routes) {
+    for (const node of route) {
       flat.push(node);
     }
     flat.push(0);

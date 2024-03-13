@@ -1,7 +1,7 @@
-import { isCapacityOKFlat } from './_constrains';
+import { isCapacityOKFlat } from '../_constrains';
 import { random } from './_neighbor';
-import { ProblemType } from './reader';
-import { getSolutionTotalDistanceFlat } from './utils';
+import { ProblemType } from '../reader';
+import { getSolutionTotalDistanceFlat } from '../utils';
 
 export const search = ({
   solution,

@@ -1,11 +1,13 @@
+import 'dotenv/config';
+
 import * as appRoot from 'app-root-path';
-import { getProblem } from './reader';
-import { clarkeWrightSavingsAlgorithm } from './clarke';
+import { getProblem } from './solvers/reader';
+// import { clarkeWrightSavingsAlgorithm } from './solvers/CLARKE/clarke';
 import {
   checkCapacity,
   checkDepotsPlacement,
   checkAllLocationsVisitedOnce,
-} from './constrains';
+} from './solvers/constrains';
 
 import express from 'express';
 import cors from 'cors';

@@ -1,5 +1,3 @@
-import { CONFIG } from './config';
-
 export type EarthPointType = {
   latitude: number;
   longitude: number;
@@ -25,7 +23,7 @@ export const getDistanceWithOpenRouteService = async ({
   endPoint: EarthPointType;
 }) => {
   //! ВНИМАНИЕ! Тут координаты передаются сначала longitude (долгота) а потом latitude (широта)
-  const url = `https://api.openrouteservice.org/v2/directions/driving-hgv?api_key=${CONFIG.OPEN_ROUTE_API_KEY}&start=${startPoint.longitude},${startPoint.latitude}&end=${endPoint.longitude},${endPoint.latitude}`;
+  const url = `https://api.openrouteservice.org/v2/directions/driving-hgv?api_key=${process.env.OPEN_ROUTE_API_KEY}&start=${startPoint.longitude},${startPoint.latitude}&end=${endPoint.longitude},${endPoint.latitude}`;
 
   const response = await fetch(url);
 

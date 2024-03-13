@@ -1,4 +1,4 @@
-import { ProblemType } from './reader';
+import { ProblemType } from '../reader';
 
 //! Выполняется ДО расчета вероятностей чтобы по сути отобрать кандидатов на следующую точку ИЛИ же сразу вернутся в депо
 const getNextPossibleNodesForAnt = ({
