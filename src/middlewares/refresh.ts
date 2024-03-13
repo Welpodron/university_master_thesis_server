@@ -34,7 +34,7 @@ export const refresh: RequestHandler = async (req, res, next) => {
 
   if (!token) {
     res
-      .status(403)
+      .status(401)
       .json('Не предоставлен токен обновления или же он не является валидным');
   }
 };

@@ -32,7 +32,13 @@ const sleep = ({ ms }: { ms: number }) => {
 
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    // origin: 'http://localhost:5173',
+    origin: true,
+    credentials: true,
+  })
+);
 app.use(cookieParser());
 app.use(express.json());
 app.use(taskRouter);

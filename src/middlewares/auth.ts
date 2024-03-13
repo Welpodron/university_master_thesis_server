@@ -49,7 +49,7 @@ export const auth =
 
     if (!token) {
       res
-        .status(403)
+        .status(401)
         .json(
           'Не предоставлен токен авторизации или же он не является валидным'
         );

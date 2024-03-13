@@ -1,4 +1,4 @@
-import express, { Request } from 'express';
+import express from 'express';
 
 import { object, string } from 'yup';
 
@@ -14,45 +14,105 @@ const authLoginSchema = object({
   pass: string().required(),
 });
 
-authRouter.post('/login', async (req, res) => {
+authRouter.post('/login', async (req, res, next) => {
   try {
-    const { email, pass } = await authLoginSchema.validate(req.body);
+    let isSet = false;
 
-    const user = await DB.user.findUnique({
-      where: {
-        email,
-      },
-    });
+    if (req.cookies && req.cookies.refreshToken) {
+      try {
+        const token = String(req.cookies.refreshToken);
 
-    if (user == null) {
-      throw new Error('Введенный email или пароль не являются валидными');
+        const decoded = Tokenizer.verify({
+          token,
+          secret: String(process.env.JWT_REFRESH_SECRET),
+        });
+
+        if (
+          decoded != null &&
+          typeof decoded === 'object' &&
+          decoded.id &&
+          decoded.role
+        ) {
+          const tokens = Tokenizer.generate({
+            id: decoded.id,
+            role: decoded.role,
+          });
+
+          await DB.session.update({
+            where: {
+              refreshToken: req.cookies.refreshToken,
+            },
+            data: {
+              refreshToken: tokens.refreshToken.value,
+              expiresAt: tokens.refreshToken.expirationDate,
+            },
+          });
+
+          // MUST BE IN cookie ONLY
+          res.cookie('refreshToken', tokens.refreshToken.value, {
+            maxAge: tokens.refreshToken.maxAge,
+            httpOnly: true,
+          });
+
+          // console.log('refreshToken was found');
+
+          // accessToken MUST STORE IN MEMORY INSIDE CLIENT
+          res.json({
+            id: decoded.id,
+            role: decoded.role,
+            token: tokens.accessToken.value,
+          });
+
+          isSet = true;
+        }
+      } catch (error) {
+        console.error(error);
+      }
     }
 
-    const isPassMatch = await compare(pass, user.pass);
+    if (!isSet) {
+      console.log('switching to standard auth protocol');
 
-    if (!isPassMatch) {
-      throw new Error('Введенный email или пароль не являются валидными');
+      const { email, pass } = await authLoginSchema.validate(req.body);
+
+      const user = await DB.user.findUnique({
+        where: {
+          email,
+        },
+      });
+
+      if (user == null) {
+        throw new Error('Введенный email или пароль не являются валидными');
+      }
+
+      const isPassMatch = await compare(pass, user.pass);
+
+      if (!isPassMatch) {
+        throw new Error('Введенный email или пароль не являются валидными');
+      }
+
+      const tokens = Tokenizer.generate({ id: user.id, role: user.role });
+
+      await DB.session.create({
+        data: {
+          refreshToken: tokens.refreshToken.value,
+          expiresAt: tokens.refreshToken.expirationDate,
+        },
+      });
+
+      // MUST BE IN cookie ONLY
+      res.cookie('refreshToken', tokens.refreshToken.value, {
+        maxAge: tokens.refreshToken.maxAge,
+        httpOnly: true,
+      });
+
+      // accessToken MUST STORE IN MEMORY INSIDE CLIENT
+      res.json({
+        id: user.id,
+        role: user.role,
+        token: tokens.accessToken.value,
+      });
     }
-
-    const tokens = Tokenizer.generate({ id: user.id, role: user.role });
-
-    await DB.session.create({
-      data: {
-        refreshToken: tokens.refreshToken.value,
-        expiresAt: tokens.refreshToken.expirationDate,
-      },
-    });
-
-    // MUST BE IN cookie ONLY
-    res.cookie('refreshToken', tokens.refreshToken.value, {
-      maxAge: tokens.refreshToken.maxAge,
-      httpOnly: true,
-    });
-
-    // accessToken MUST STORE IN MEMORY INSIDE CLIENT
-    res.json({
-      accessToken: tokens.accessToken.value,
-    });
   } catch (error) {
     res.status(400).json((error as Error).message);
   }
@@ -101,7 +161,9 @@ authRouter.post('/refresh', refresh, async (req, res) => {
 
     // accessToken MUST STORE IN MEMORY INSIDE CLIENT
     res.json({
-      accessToken: tokens.accessToken.value,
+      id: (req as Record<string, any>).user.id,
+      role: (req as Record<string, any>).user.role,
+      token: tokens.accessToken.value,
     });
   } catch (error) {
     res.status(400).json((error as Error).message);
