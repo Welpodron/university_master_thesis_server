@@ -1,6 +1,6 @@
 import { RequestHandler } from 'express';
 
-import Tokenizer from '../tokenizer';
+import Tokenizer from '../../tokenizer';
 
 export const refresh: RequestHandler = async (req, res, next) => {
   let token;

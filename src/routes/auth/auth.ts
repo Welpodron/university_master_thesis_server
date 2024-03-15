@@ -1,12 +1,10 @@
 import express from 'express';
 
 import { object, string } from 'yup';
-
-import DB from '../db';
-import Tokenizer from '../tokenizer';
 import { compare } from 'bcrypt';
-import { refresh } from '../middlewares/refresh';
-import { auth } from '../middlewares/auth';
+import DB from '../../db';
+import Tokenizer from '../../tokenizer';
+import { refresh, auth } from '../../middlewares';
 
 export const authRouter = express.Router();
 

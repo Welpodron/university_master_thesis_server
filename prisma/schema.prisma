@@ -11,13 +11,15 @@ datasource db {
 }
 
 model Task {
-  id          Int       @id @default(autoincrement())
-  longitude   Float
-  latitude    Float
-  demand      Int
-  completed   Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  completedAt DateTime?
+  id           Int         @id @default(autoincrement())
+  longitude    Float
+  latitude     Float
+  demand       Int
+  assigned     Boolean     @default(false)
+  createdAt    DateTime    @default(now())
+  assignedAt   DateTime?
+  assignment   Assignment? @relation(fields: [assignmentId], references: [id])
+  assignmentId Int?
 }
 
 model Job {
@@ -30,18 +32,20 @@ model Job {
 
 model Assignment {
   id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    Int
   createdAt DateTime @default(now())
+  vehicle   Vehicle? @relation(fields: [vehicleId], references: [id])
+  vehicleId Int?
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    Int?
+  tasks     Task[]
 }
 
 model User {
-  id         Int           @id @default(autoincrement())
+  id         Int          @id @default(autoincrement())
   name       String
-  email      String        @unique
-  role       String        @default("DRIVER")
+  email      String       @unique
+  role       String       @default("DRIVER")
   pass       String
-  vehicles   UserVehicle[]
   assigments Assignment[]
 }
 
@@ -51,17 +55,8 @@ model Session {
 }
 
 model Vehicle {
-  id       Int           @id @default(autoincrement())
-  name     String
-  capacity Int
-  users    UserVehicle[]
-}
-
-model UserVehicle {
-  user      User    @relation(fields: [userId], references: [id])
-  userId    Int
-  vehicle   Vehicle @relation(fields: [vehicleId], references: [id])
-  vehicleId Int
-
-  @@id([userId, vehicleId])
+  id         Int          @id @default(autoincrement())
+  name       String
+  capacity   Int
+  assigments Assignment[]
 }
