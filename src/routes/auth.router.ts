@@ -6,6 +6,7 @@ import DB from '../db';
 import Tokenizer from '../tokenizer';
 import { compare } from 'bcrypt';
 import { refresh } from '../middlewares/refresh';
+import { auth } from '../middlewares/auth';
 
 export const authRouter = express.Router();
 
@@ -165,6 +166,21 @@ authRouter.post('/refresh', refresh, async (req, res) => {
       role: (req as Record<string, any>).user.role,
       token: tokens.accessToken.value,
     });
+  } catch (error) {
+    res.status(400).json((error as Error).message);
+  }
+});
+
+authRouter.post('/verify', auth(), refresh, async (req, res) => {
+  try {
+    if ((req as Record<string, any>).user) {
+      res.json({
+        id: (req as Record<string, any>).user.id,
+        role: (req as Record<string, any>).user.role,
+      });
+    } else {
+      res.json(null);
+    }
   } catch (error) {
     res.status(400).json((error as Error).message);
   }

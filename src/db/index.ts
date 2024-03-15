@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 
 import { hash } from 'bcrypt';
 
@@ -22,3 +22,5 @@ export default new PrismaClient().$extends({
     },
   },
 });
+
+export const _models = Prisma.dmmf.datamodel.models;

@@ -2,7 +2,7 @@ import express from 'express';
 
 import { object, number } from 'yup';
 
-import DB from '../db';
+import DB, { _models } from '../db';
 import { auth } from '../middlewares/auth';
 
 import { USER_ROLES } from '../constants';
@@ -65,6 +65,23 @@ const taskUpdateSchema = object({
   }),
 });
 
+taskRouter.get('/_tasksModel', auth(USER_ROLES.MANAGER), async (req, res) => {
+  try {
+    const _fields =
+      _models.find((model) => model.name === 'Task')?.fields ?? [];
+
+    const _tree: Record<string, any> = {};
+
+    for (const _field of _fields) {
+      _tree[_field.name] = _field;
+    }
+
+    res.json(_tree);
+  } catch (error) {
+    res.status(500).json((error as Error).message);
+  }
+});
+
 taskRouter.get('/tasks', auth(USER_ROLES.MANAGER), async (req, res) => {
   try {
     const tasks = await DB.task.findMany();
@@ -91,7 +108,7 @@ taskRouter.post('/tasks', auth(USER_ROLES.MANAGER), async (req, res) => {
 
     res.json(task);
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(400).json((error as Error).message);
   }
 });
