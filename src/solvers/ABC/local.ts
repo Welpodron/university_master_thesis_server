@@ -19,11 +19,15 @@ export const search = ({
   const ONLY_FEASIBLE = true;
 
   for (let _ = 0; _ < 12; _++) {
+    // console.log('local search cycle ' + _);
     const newSolution = random(currentSolution);
+    // console.log('new cost calc');
     const newCost = getSolutionTotalDistanceFlat({
       solution: newSolution,
       distancesMatrix: problem.distancesMatrix,
     });
+
+    // console.log('comparison new cost cals');
 
     if (currentCost >= newCost) {
       if (ONLY_FEASIBLE) {

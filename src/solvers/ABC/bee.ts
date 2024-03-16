@@ -31,11 +31,13 @@ export const getFitness = ({
     solution,
     distancesMatrix: problem.distancesMatrix,
   });
+  // console.log(cost);
   const q =
     getSolutionRoutesCapacitiesFlatMax({
       solution,
       demands: problem.demands,
     }) - problem.capacity;
+  // console.log(q);
   return 1 / (cost + alpha * q);
 };
 
@@ -43,6 +45,8 @@ export const getRoulette = ({ fitnesses }: { fitnesses: number[] }) => {
   const fitnessesSum = fitnesses.reduce((acc, fitness) => acc + fitness, 0);
 
   const probabilities = fitnesses.map((fitness) => fitness / fitnessesSum);
+
+  // console.log(fitnesses);
 
   // Calculate the total sum of all the probabilities
   const totalSum = probabilities.reduce(
@@ -103,7 +107,7 @@ export const bee = async ({
   const counters = new Array(solutions.length).fill(0);
 
   let v = 0;
-  const maxIterations = problem.dimension > 100 ? 300 : 300;
+  const maxIterations = problem.dimension > 100 ? 300 : 150;
 
   const onlookers = 5;
 
@@ -130,17 +134,20 @@ export const bee = async ({
   // console.log(distances);
 
   while (v < maxIterations) {
+    // console.log(v);
     if (maxIterations > 300) {
       if (v % 250 === 0) {
-        console.log(v);
+        console.log('Iteration: ' + v);
       }
     } else {
       if (v % 100 === 0) {
-        console.log(v);
+        console.log('Iteration: ' + v);
       }
     }
 
     fitnesses = solutions.map((solution) => getFitness({ solution, problem }));
+
+    // console.log('fitnesses');
     //! Начало раздела a)
     for (let i = 0; i < tau; i++) {
       /*
@@ -157,15 +164,18 @@ export const bee = async ({
           else:
               counters[i] += 1
       */
+      // console.log('local');
       const local = search({
         solution: solutions[i],
         problem,
       });
+      // console.log('local fitness');
       const fitness = getFitness({
         solution: local,
         problem,
         alpha,
       });
+      // console.log('local fitness comparison');
 
       if (fitness > fitnesses[i]) {
         solutions[i] = [...local];
@@ -175,6 +185,7 @@ export const bee = async ({
         counters[i] = counters[i] + 1;
       }
     }
+    // console.log('neighborhood');
     //! Начало раздела b)
     const neighborhood: number[][][] = [];
     for (let k = 0; k < tau; k++) {

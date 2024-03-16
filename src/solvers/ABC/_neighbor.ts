@@ -136,7 +136,9 @@ export const random_swap = (solution: number[]) => {
 
   const length = _solution.length;
 
-  let patience = 1;
+  let patience = 10;
+
+  // console.log('random_swap START');
 
   while (patience > 0) {
     const i = Math.floor(Math.random() * (length - 1 - 1)) + 1;
@@ -154,6 +156,8 @@ export const random_swap = (solution: number[]) => {
     patience--;
   }
 
+  // console.log('random_swap END');
+
   return _solution;
 };
 
@@ -163,6 +167,8 @@ export const random_swap_sub = (solution: number[]) => {
   const length = _solution.length;
 
   let patience = 10;
+
+  // console.log('random_swap_sub START');
 
   while (patience > 0) {
     const k = Math.floor(Math.random() * (7 - 2)) + 2;
@@ -228,6 +234,8 @@ export const random_swap_sub = (solution: number[]) => {
     patience--;
   }
 
+  // console.log('random_swap_sub END');
+
   return _solution;
 };
 
@@ -237,6 +245,8 @@ export const random_reversing = (solution: number[]) => {
   const length = _solution.length;
 
   let patience = 10;
+
+  // console.log('random_reversing START');
 
   while (patience > 0) {
     const i = Math.floor(Math.random() * (length - 1 - 1)) + 1;
@@ -271,6 +281,8 @@ export const random_reversing = (solution: number[]) => {
     patience--;
   }
 
+  // console.log('random_reversing END');
+
   return _solution;
 };
 
@@ -280,6 +292,8 @@ export const random_swap_sub_reverse = (solution: number[]) => {
   const length = _solution.length;
 
   let patience = 10;
+
+  // console.log('random_swap_sub_reverse START');
 
   while (patience > 0) {
     const k = Math.floor(Math.random() * (7 - 2)) + 2;
@@ -345,6 +359,8 @@ export const random_swap_sub_reverse = (solution: number[]) => {
     patience--;
   }
 
+  // console.log('random_swap_sub_reverse END');
+
   return _solution;
 };
 
@@ -355,6 +371,8 @@ export const random_insert_sub_reverse = (solution: number[]) => {
 
   let patience = 10;
 
+  // console.log('random_insert_sub_reverse START');
+
   while (patience > 0) {
     const k = Math.floor(Math.random() * (7 - 2)) + 2;
 
@@ -362,6 +380,7 @@ export const random_insert_sub_reverse = (solution: number[]) => {
     const j = Math.floor(Math.random() * (length - k - 1 - 1)) + 1;
 
     if (Math.abs(i - j) <= k) {
+      patience--;
       continue;
     }
 
@@ -410,6 +429,8 @@ export const random_insert_sub_reverse = (solution: number[]) => {
 
     patience--;
   }
+
+  // console.log('random_insert_sub_reverse END');
 
   return _solution;
 };

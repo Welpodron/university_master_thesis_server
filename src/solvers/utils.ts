@@ -86,6 +86,13 @@ export const getSolutionTotalDistanceFlat = ({
 
   for (let i = 0; i < solution.length - 1; i++) {
     total += distancesMatrix[solution[i]][solution[i + 1]];
+    if (isNaN(total)) {
+      // console.log(distancesMatrix[0].length);
+      console.log(solution[i]);
+      console.log(solution[i + 1]);
+
+      throw new Error('smth went wrong');
+    }
   }
 
   return total;
@@ -121,7 +128,10 @@ export const getSolutionRoutesCapacitiesFlat = ({
   const routesCapacities = [];
   let routeCapacity = 0;
 
-  for (let i = 1; i < solution.length - 1; i++) {
+  // console.log('getSolutionRoutesCapacitiesFlat SOLUTION:');
+  // console.log(solution);
+
+  for (let i = 0; i < solution.length; i++) {
     if (solution[i] === 0) {
       routesCapacities.push(routeCapacity);
       routeCapacity = 0;
@@ -129,6 +139,9 @@ export const getSolutionRoutesCapacitiesFlat = ({
       routeCapacity += demands[solution[i]];
     }
   }
+
+  // console.log('getSolutionRoutesCapacitiesFlat RESULT:');
+  // console.log(routesCapacities);
 
   return routesCapacities;
 };
