@@ -10,12 +10,12 @@ const BASE_URL = `${MODEL}s`;
 
 export const router = express.Router();
 
-const creationSchema = object({
+export const creationSchema = object({
   name: string().required().min(3),
   capacity: number().nonNullable().integer().min(1).required(),
 });
 
-const updateSchema = object({
+export const updateSchema = object({
   name: string().min(3),
   capacity: number().integer().min(1),
 });
