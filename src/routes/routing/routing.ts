@@ -2,12 +2,15 @@ import express from 'express';
 
 import { USER_ROLES } from '../../constants';
 import { auth } from '../../middlewares';
-import { DB } from '../../db';
+import { DB, _models } from '../../db';
 import { ValidationError, array, number, object, string, tuple } from 'yup';
 import { StatusCodes } from 'http-status-codes';
 import { v4 as uuidv4 } from 'uuid';
 
 export const router = express.Router();
+
+const MODEL = 'task';
+const BASE_URL = `${MODEL}s`;
 
 export const creationSchema = object({
   startCoords: tuple([
@@ -102,7 +105,23 @@ router.get('/routing', async (req, res) => {
       },
     });
 
-    res.json(routes);
+    const _fields =
+      _models.find(
+        (_model) =>
+          _model.name ===
+          (MODEL as string).charAt(0).toUpperCase() + (MODEL as string).slice(1)
+      )?.fields ?? [];
+
+    const _tree: Record<string, any> = {};
+
+    for (const _field of _fields) {
+      if (_field.name === 'pass' || _field.name === 'role') {
+        continue;
+      }
+      _tree[_field.name] = _field;
+    }
+
+    res.json({ data: routes, model: _tree });
   } catch (error) {
     res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
