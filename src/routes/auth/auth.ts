@@ -2,8 +2,8 @@ import express from 'express';
 
 import { object, string } from 'yup';
 import { compare } from 'bcrypt';
-import DB from '../../db';
-import Tokenizer from '../../tokenizer';
+import { DB } from '../../db';
+import { Tokenizer } from '../../tokenizer';
 import { refresh, auth } from '../../middlewares';
 
 export const authRouter = express.Router();

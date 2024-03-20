@@ -1,21 +1,19 @@
 import type { RequestHandler } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import DB from '../../db';
+import { DB } from '../../db';
 
 import { ValidationError } from 'yup';
 import type { Schema } from 'yup';
 
 export const update =
-  (name: keyof typeof DB, schema: Schema): RequestHandler =>
+  (model: keyof typeof DB, schema: Schema): RequestHandler =>
   async (req, res) => {
     try {
       const data = await schema.validate(req.body);
 
-      console.log(data);
-
       const { id } = req.params;
 
-      const result = await (DB[name] as any).update({
+      const result = await (DB[model] as any).update({
         where: {
           id: Number(id),
         },

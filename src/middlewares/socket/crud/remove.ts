@@ -1,5 +1,5 @@
 import { ValidationError } from 'yup';
-import DB from '../../../db';
+import { DB } from '../../../db';
 
 //! TODO: FIX SELF ID REMOVAL FROM USERS
 export const remove =

@@ -11,6 +11,9 @@ export type OpenRouteServiceResponseType = {
         distance: number;
       };
     };
+    geometry: {
+      coordinates: [number, number][];
+    };
   }[];
 };
 
@@ -36,22 +39,24 @@ export const getDistanceWithOpenRouteService = async ({
   const data = (await response.json()) as OpenRouteServiceResponseType;
 
   if (!data.features) {
-    throw new Error(`OpenRouteService error: ${data}`);
+    throw new Error(`OpenRouteService featurs not found  error: ${data}`);
   }
 
   const feature = data.features[0];
 
   if (!feature) {
-    throw new Error(`OpenRouteService error: ${data}`);
+    throw new Error(`OpenRouteService feature not found error: ${data}`);
   }
 
-  const { distance } = feature?.properties?.summary;
+  const { distance, duration } = feature?.properties?.summary;
 
   if (!distance) {
-    throw new Error(`OpenRouteService error: ${data}`);
+    throw new Error(`OpenRouteService distance not found error: ${data}`);
   }
 
-  return distance;
+  const { coordinates } = feature?.geometry;
+
+  return { distance, duration, coordinates };
 };
 
 // https://en.wikipedia.org/wiki/Metric_space#Simple_examples

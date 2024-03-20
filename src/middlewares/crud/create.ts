@@ -1,19 +1,17 @@
 import type { RequestHandler } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import DB from '../../db';
+import { DB } from '../../db';
 
 import { ValidationError } from 'yup';
 import type { Schema } from 'yup';
 
 export const create =
-  (name: keyof typeof DB, schema: Schema): RequestHandler =>
+  (model: keyof typeof DB, schema: Schema): RequestHandler =>
   async (req, res) => {
     try {
       const data = await schema.validate(req.body);
 
-      console.log(data);
-
-      const result = await (DB[name] as any).create({
+      const result = await (DB[model] as any).create({
         data,
       });
 

@@ -2,7 +2,7 @@ import { Prisma, PrismaClient } from '@prisma/client';
 
 import { hash } from 'bcrypt';
 
-export default new PrismaClient().$extends({
+export const DB = new PrismaClient().$extends({
   query: {
     user: {
       async update({ args, query }) {

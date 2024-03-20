@@ -10,6 +10,8 @@ import {
   vehicleRouter,
   jobRouter,
   assignmentRouter,
+  settingsRouter,
+  routingRouter,
 } from '../routes';
 
 const app = express();
@@ -29,5 +31,7 @@ app.use(authRouter);
 app.use(vehicleRouter);
 app.use(jobRouter);
 app.use(assignmentRouter);
+app.use(settingsRouter);
+app.use(routingRouter);
 
 export { app };

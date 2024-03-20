@@ -2,10 +2,9 @@ import express from 'express';
 
 import { object, number, string } from 'yup';
 import { USER_ROLES } from '../../constants';
-import { auth, create, model, read, remove, update } from '../../middlewares';
+import { auth, create, read, remove, update } from '../../middlewares';
 
 const MODEL = 'vehicle';
-const TABLE = 'Vehicle';
 const BASE_URL = `${MODEL}s`;
 
 export const router = express.Router();
@@ -19,8 +18,6 @@ export const updateSchema = object({
   name: string().min(3),
   capacity: number().integer().min(1),
 });
-
-router.get(`/_${BASE_URL}Model`, auth(USER_ROLES.MANAGER), model(TABLE));
 
 router.get(`/${BASE_URL}`, auth(USER_ROLES.MANAGER), read(MODEL));
 

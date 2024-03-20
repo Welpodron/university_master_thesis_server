@@ -1,4 +1,4 @@
-import DB, { _models } from '../../../db';
+import { DB, _models } from '../../../db';
 
 export const read =
   (

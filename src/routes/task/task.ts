@@ -3,15 +3,14 @@ import express from 'express';
 import { object, number } from 'yup';
 
 import { USER_ROLES } from '../../constants';
-import { auth, model, read, update, remove, create } from '../../middlewares';
+import { auth, read, update, remove, create } from '../../middlewares';
 
 const MODEL = 'task';
-const TABLE = 'Task';
 const BASE_URL = `${MODEL}s`;
 
 export const router = express.Router();
 
-const creationSchema = object({
+export const creationSchema = object({
   demand: number().nonNullable().integer().min(1).required(),
   latitude: number()
     .test({
@@ -41,7 +40,7 @@ const creationSchema = object({
     .required(),
 });
 
-const updateSchema = object({
+export const updateSchema = object({
   demand: number().integer().min(1),
   latitude: number().test({
     name: 'is-finite',
@@ -66,8 +65,6 @@ const updateSchema = object({
     },
   }),
 });
-
-router.get(`/_${BASE_URL}Model`, auth(USER_ROLES.MANAGER), model(TABLE));
 
 router.get(`/${BASE_URL}`, auth(USER_ROLES.MANAGER), read(MODEL));
 

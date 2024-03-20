@@ -9,7 +9,7 @@ import path from 'path';
 const PORT = Number(process.env.PORT) || 3000;
 const HOSTNAME = process.env.HOSTNAME || 'localhost';
 
-import DB, { _models } from './db';
+import { DB, _models } from './db';
 import { Server } from 'socket.io';
 import { createServer } from 'http';
 import { createWS, readWS, removeWS, updateWS } from './middlewares';
@@ -28,77 +28,87 @@ import { vehicleCreationSchema, vehicleUpdateSchema } from './routes';
 try {
   const server = createServer(app);
 
-  // const io = new Server(server, {
-  //   cors: {
-  //     credentials: true,
-  //     origin: true,
-  //   },
-  // });
+  const io = new Server(server, {
+    cors: {
+      credentials: true,
+      origin: true,
+    },
+  });
 
-  // io.engine.use((req: any, res: any, next: any) => {
-  //   const isHandshake = req._query.sid === undefined;
+  io.engine.use((req: any, res: any, next: any) => {
+    const isHandshake = req._query.sid === undefined;
 
-  //   if (isHandshake) {
-  //     // console.log('header');
-  //     // console.log(req.headers.authorization);
-  //     next();
-  //   } else {
-  //     if (!req.headers.cookie) {
-  //       return next(
-  //         new Error('Не обнаружены cookie авторизации, WebSocket не доступен')
-  //       );
-  //     }
-  //     // console.log('cookies');
-  //     // console.log(parse(req.headers.cookie));
+    if (isHandshake) {
+      next();
+    } else {
+      if (!req.headers.cookie) {
+        return next(
+          new Error('Не обнаружены cookie авторизации, WebSocket не доступен')
+        );
+      }
+      // console.log('cookies');
+      // console.log(parse(req.headers.cookie));
 
-  //     next();
-  //   }
-  // });
+      next();
+    }
+  });
 
-  // io.on('connection', (socket) => {
-  //   console.log('a user connected');
+  io.on('connection', (socket) => {
+    console.log('a user connected');
 
-  //   socket.on('disconnect', () => {
-  //     console.log('user disconnected');
-  //   });
+    socket.on('disconnect', () => {
+      console.log('user disconnected');
+    });
 
-  //   socket.on(
-  //     'DELETE_VEHICLE',
-  //     removeWS('vehicle', (data) => {
-  //       io.emit('VEHICLE_DELETE', {
-  //         data,
-  //       });
-  //     })
-  //   );
+    // socket.on('DELETE_VEHICLES', async () => {
+    //   io.emit('VEHICLES_MESSAGE', true);
+    // });
+    // socket.on(
+    //   'DELETE_VEHICLES',
+    //   removeWS('vehicle', (data) => {
+    //     io.emit('VEHICLES_DELETE', {
+    //       data,
+    //     });
+    //   })
+    // );
 
-  //   socket.on(
-  //     'UPDATE_VEHICLE',
-  //     updateWS('vehicle', vehicleUpdateSchema, (data) => {
-  //       io.emit('VEHICLE_UPDATE', {
-  //         data,
-  //       });
-  //     })
-  //   );
+    // socket.on('UPDATE_VEHICLE', async () => {
+    //   io.emit('VEHICLES_MESSAGE', true);
+    // });
+    // socket.on(
+    //   'UPDATE_VEHICLE',
+    //   updateWS('vehicle', vehicleUpdateSchema, (data) => {
+    //     io.emit('VEHICLE_UPDATE', {
+    //       data,
+    //     });
+    //   })
+    // );
 
-  //   socket.on(
-  //     'ADD_VEHICLE',
-  //     createWS('vehicle', vehicleCreationSchema, (data) => {
-  //       io.emit('VEHICLE_ADD', {
-  //         data,
-  //       });
-  //     })
-  //   );
+    // socket.on('ADD_VEHICLE', async () => {
+    //   io.emit('VEHICLES_MESSAGE', true);
+    // });
+    // socket.on(
+    //   'ADD_VEHICLE',
+    //   createWS('vehicle', vehicleCreationSchema, (data) => {
+    //     io.emit('VEHICLE_ADD', {
+    //       data,
+    //     });
+    //   })
+    // );
 
-  //   socket.on(
-  //     'GET_VEHICLES',
-  //     readWS('vehicle', (data, model) => {
-  //       io.emit('VEHICLES_UPDATE', {
-  //         data,
-  //         model,
-  //       });
-  //     })
-  //   );
-  // });
+    // socket.on('GET_VEHICLES', async () => {
+    //   io.emit('VEHICLES_MESSAGE', true);
+    // });
+    // socket.on(
+    //   'GET_VEHICLES',
+    //   readWS('vehicle', (data, model) => {
+    //     io.emit('VEHICLES_UPDATE', {
+    //       data,
+    //       model,
+    //     });
+    //   })
+    // );
+  });
 
   server.listen(PORT, HOSTNAME, async () => {
     log({

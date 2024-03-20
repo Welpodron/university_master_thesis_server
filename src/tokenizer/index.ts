@@ -1,7 +1,7 @@
 import { sign, verify } from 'jsonwebtoken';
 import ms from 'ms';
 
-class Tokenizer {
+class _Tokenizer {
   generate(payload: object) {
     const accessTokenMaxAgeMs = ms(String(process.env.JWT_ACCESS_EXPIRES_IN));
     const refreshTokenMaxAgeMs = ms(String(process.env.JWT_REFRESH_EXPIRES_IN));
@@ -39,4 +39,4 @@ class Tokenizer {
   }
 }
 
-export default new Tokenizer();
+export const Tokenizer = new _Tokenizer();

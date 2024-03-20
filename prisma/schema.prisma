@@ -58,5 +58,26 @@ model Vehicle {
   id         Int          @id @default(autoincrement())
   name       String
   capacity   Int
+  additional Boolean      @default(false)
   assigments Assignment[]
+}
+
+model Routing {
+  id          String   @unique
+  distance    Int
+  duration    Int
+  startCoords String
+  endCoords   String
+  manual      Boolean
+  pathCoords  String?
+  createdAt   DateTime @default(now())
+
+  @@id([startCoords, endCoords])
+}
+
+model Settings {
+  id                    Int    @id
+  depotLocation         String
+  routingAlgo           String
+  routingAlgoIterations Int
 }

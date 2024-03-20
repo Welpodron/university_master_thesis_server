@@ -1,6 +1,6 @@
 import { parentPort } from 'node:worker_threads';
 import process from 'node:process';
-import DB from '../db';
+import { DB } from '../db';
 import { log } from '../loger';
 import { sleep } from '../utils/utils';
 import Cacher from '../cacher';

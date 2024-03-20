@@ -1,5 +1,5 @@
 import { Schema } from 'yup';
-import DB from '../../../db';
+import { DB } from '../../../db';
 
 export const update =
   (

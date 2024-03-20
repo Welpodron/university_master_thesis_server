@@ -1,10 +1,10 @@
 import type { RequestHandler } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { ValidationError } from 'yup';
-import DB from '../../db';
+import { DB } from '../../db';
 
 export const remove =
-  (name: keyof typeof DB): RequestHandler =>
+  (model: keyof typeof DB): RequestHandler =>
   async (req, res) => {
     try {
       const { ids } = req.body;
@@ -17,7 +17,7 @@ export const remove =
 
       ids.forEach((id: string) => {
         const _id = parseInt(id);
-        if (name == 'user') {
+        if (model == 'user') {
           if (_id == (req as Record<string, any>).user.id) {
             return;
           }
@@ -32,7 +32,7 @@ export const remove =
         throw new ValidationError('Ожидался не пустой список идентификаторов');
       }
 
-      const data = await (DB[name] as any).deleteMany({
+      const result = await (DB[model] as any).deleteMany({
         where: {
           id: {
             in: _ids,
@@ -40,7 +40,7 @@ export const remove =
         },
       });
 
-      res.json(data);
+      res.json(_ids);
     } catch (error) {
       if (error instanceof ValidationError) {
         res.status(StatusCodes.BAD_REQUEST).json((error as Error).message);

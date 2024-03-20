@@ -1,4 +1,4 @@
-import Tokenizer from '../../tokenizer';
+import { Tokenizer } from '../../tokenizer';
 import type { RequestHandler } from 'express';
 
 export const auth =
