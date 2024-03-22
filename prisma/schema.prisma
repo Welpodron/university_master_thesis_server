@@ -77,7 +77,8 @@ model Routing {
 
 model Settings {
   id                    Int    @id
-  depotLocation         String
-  routingAlgo           String
-  routingAlgoIterations Int
+  depotLocation         String @default("[]")
+  routingKey            String @default("")
+  routingAlgo           String @default("ABC_CLARKE")
+  routingAlgoIterations Int    @default(500)
 }
