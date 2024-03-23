@@ -117,7 +117,7 @@ authRouter.post('/login', async (req, res, next) => {
   }
 });
 
-authRouter.post('/logout', refresh, async (req, res) => {
+authRouter.get('/logout', refresh, async (req, res) => {
   try {
     await DB.session.delete({
       where: {

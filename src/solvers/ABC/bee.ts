@@ -74,9 +74,11 @@ export const getRoulette = ({ fitnesses }: { fitnesses: number[] }) => {
 export const bee = async ({
   problem,
   useClarke = true,
+  iterations = 500,
 }: {
   problem: ProblemType;
   useClarke?: boolean;
+  iterations?: number;
 }) => {
   // TODO: Реализовать многопоточность
   //! x ТУТ это массив решений solutions: Randomly generate a set of solutions as initial food source
@@ -107,7 +109,8 @@ export const bee = async ({
   const counters = new Array(solutions.length).fill(0);
 
   let v = 0;
-  const maxIterations = problem.dimension > 100 ? 300 : 150;
+  // const maxIterations = problem.dimension > 100 ? 300 : 150;
+  const maxIterations = iterations;
 
   const onlookers = 5;
 
@@ -212,7 +215,13 @@ export const bee = async ({
     */
     for (let _ = 0; _ < onlookers; _++) {
       // ! Пункт i. раздела c)
-      const roulette = getRoulette({ fitnesses });
+      let roulette = 0;
+      try {
+        roulette = getRoulette({ fitnesses });
+      } catch (error) {
+        return CLARKE_CACHED;
+      }
+
       // ! Пункт ii. раздела c)
       const neighbor = random(solutions[roulette]);
       // ! Пункт iii. раздела c)
@@ -423,7 +432,8 @@ export const bee = async ({
   }
 
   if (bestIndex === -1) {
-    throw new Error('bestSolutionIndex === -1');
+    return CLARKE_CACHED;
+    // throw new Error('bestSolutionIndex === -1');
   }
 
   return solutions[bestIndex];

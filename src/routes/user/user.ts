@@ -68,12 +68,16 @@ router.post(`/${BASE_URL}`, auth(USER_ROLES.MANAGER), async (req, res) => {
       },
     });
 
-    await Mailer.sendMail({
-      from: process.env.MAIL_SMTP_USER,
-      to: email,
-      subject: 'Hello ✔',
-      html: `<b>login: ${email} pass: ${pass}</b>`,
-    });
+    try {
+      await Mailer.sendMail({
+        from: process.env.MAIL_SMTP_USER,
+        to: email,
+        subject: 'Регистрация в системе',
+        html: `<b>Логин: ${email} Пароль: ${pass}</b>`,
+      });
+    } catch (error) {
+      console.log(error);
+    }
 
     res.json({ id: user.id, name: user.name });
   } catch (error) {
