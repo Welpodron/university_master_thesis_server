@@ -9,106 +9,20 @@ import path from 'path';
 const PORT = Number(process.env.PORT) || 3000;
 const HOSTNAME = process.env.HOSTNAME || 'localhost';
 
-import { DB, _models } from './db';
-import { Server } from 'socket.io';
 import { createServer } from 'http';
-import { createWS, readWS, removeWS, updateWS } from './middlewares';
-import { vehicleCreationSchema, vehicleUpdateSchema } from './routes';
-
-// const bree = new Bree({
-//   root: path.resolve('./jobs'),
-//   jobs: [
-//     {
-//       name: 'cron',
-//       interval: '10s',
-//     },
-//   ],
-// });
 
 try {
+  // const bree = new Bree({
+  //   root: path.resolve('./jobs'),
+  //   jobs: [
+  //     {
+  //       name: 'cron',
+  //       interval: '5m',
+  //     },
+  //   ],
+  // });
+
   const server = createServer(app);
-
-  const io = new Server(server, {
-    cors: {
-      credentials: true,
-      origin: true,
-    },
-  });
-
-  io.engine.use((req: any, res: any, next: any) => {
-    const isHandshake = req._query.sid === undefined;
-
-    if (isHandshake) {
-      next();
-    } else {
-      if (!req.headers.cookie) {
-        return next(
-          new Error('Не обнаружены cookie авторизации, WebSocket не доступен')
-        );
-      }
-      // console.log('cookies');
-      // console.log(parse(req.headers.cookie));
-
-      next();
-    }
-  });
-
-  io.on('connection', (socket) => {
-    console.log('a user connected');
-
-    socket.on('disconnect', () => {
-      console.log('user disconnected');
-    });
-
-    // socket.on('DELETE_VEHICLES', async () => {
-    //   io.emit('VEHICLES_MESSAGE', true);
-    // });
-    // socket.on(
-    //   'DELETE_VEHICLES',
-    //   removeWS('vehicle', (data) => {
-    //     io.emit('VEHICLES_DELETE', {
-    //       data,
-    //     });
-    //   })
-    // );
-
-    // socket.on('UPDATE_VEHICLE', async () => {
-    //   io.emit('VEHICLES_MESSAGE', true);
-    // });
-    // socket.on(
-    //   'UPDATE_VEHICLE',
-    //   updateWS('vehicle', vehicleUpdateSchema, (data) => {
-    //     io.emit('VEHICLE_UPDATE', {
-    //       data,
-    //     });
-    //   })
-    // );
-
-    // socket.on('ADD_VEHICLE', async () => {
-    //   io.emit('VEHICLES_MESSAGE', true);
-    // });
-    // socket.on(
-    //   'ADD_VEHICLE',
-    //   createWS('vehicle', vehicleCreationSchema, (data) => {
-    //     io.emit('VEHICLE_ADD', {
-    //       data,
-    //     });
-    //   })
-    // );
-
-    // socket.on('GET_VEHICLES', async () => {
-    //   io.emit('VEHICLES_MESSAGE', true);
-    // });
-    // socket.on(
-    //   'GET_VEHICLES',
-    //   readWS('vehicle', (data, model) => {
-    //     io.emit('VEHICLES_UPDATE', {
-    //       data,
-    //       model,
-    //     });
-    //   })
-    // );
-  });
 
   server.listen(PORT, HOSTNAME, async () => {
     log({

@@ -29,7 +29,7 @@ app.use(taskRouter);
 app.use(userRouter);
 app.use(authRouter);
 app.use(vehicleRouter);
-app.use(jobRouter);
+// app.use(jobRouter);
 app.use(assignmentRouter);
 app.use(settingsRouter);
 app.use(routingRouter);

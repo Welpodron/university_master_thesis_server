@@ -8,6 +8,8 @@ import { DB, _models } from '../../db';
 import { auth, remove } from '../../middlewares';
 import { generatePassword } from '../../utils/utils';
 
+import { hash } from 'bcrypt';
+
 const MODEL = 'user';
 const BASE_URL = `${MODEL}s`;
 
@@ -21,6 +23,13 @@ export const creationSchema = object({
 export const updateSchema = object({
   pass: string(),
   name: string().min(3),
+  email: string().email(),
+});
+
+export const updatePersonalSchema = object({
+  pass: string(),
+  passNew: string(),
+  passNewConfirm: string(),
   email: string().email(),
 });
 
@@ -89,11 +98,23 @@ router.put(`/${BASE_URL}/:id`, auth(), async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!id || id != (req as Record<string, any>).user.id) {
-      throw new Error('Не достаточно прав для совершения данной операции');
+    const { pass, name, email } = await updateSchema.validate(req.body);
+
+    if (name) {
+      if (
+        !id ||
+        (id != (req as Record<string, any>).user.id &&
+          (req as Record<string, any>).user.role != 'MANAGER')
+      ) {
+        throw new Error('Не достаточно прав для совершения данной операции');
+      }
     }
 
-    const { pass, name, email } = await updateSchema.validate(req.body);
+    if (pass || email) {
+      if (!id || id != (req as Record<string, any>).user.id) {
+        throw new Error('Не достаточно прав для совершения данной операции');
+      }
+    }
 
     const user = await DB.user.update({
       where: {
@@ -107,6 +128,92 @@ router.put(`/${BASE_URL}/:id`, auth(), async (req, res) => {
     });
 
     res.json(user);
+  } catch (error) {
+    res.status(400).json((error as Error).message);
+  }
+});
+
+router.get('/personal/:id', auth(), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id || id != (req as Record<string, any>).user.id) {
+      throw new Error('Не достаточно прав для совершения данной операции');
+    }
+
+    const user = await DB.user.findFirst({
+      where: {
+        id: Number(id),
+      },
+    });
+
+    if (!user) {
+      return null;
+    } else {
+      res.json({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      });
+    }
+  } catch (error) {
+    res.status(400).json((error as Error).message);
+  }
+});
+
+router.put('/personal/:id', auth(), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id || id != (req as Record<string, any>).user.id) {
+      throw new Error('Не достаточно прав для совершения данной операции');
+    }
+
+    const { pass, email, passNew, passNewConfirm } =
+      await updatePersonalSchema.validate(req.body);
+
+    if (pass != null) {
+      if (passNew !== passNewConfirm) {
+        throw new Error('Новый пароль и его повтор не совпадают');
+      }
+
+      const currentHash = await hash(String(pass), 10);
+
+      const user = await DB.user.findFirst({
+        where: {
+          id: Number(id),
+          pass: currentHash,
+        },
+      });
+
+      if (!user) {
+        throw new Error(
+          'Пользователь с текущим идентификатором не найден или же его текущий пароль не совпадает'
+        );
+      }
+    }
+
+    const user = await DB.user.update({
+      where: {
+        id: Number(id),
+      },
+      data: {
+        ...(pass != null && { pass }),
+        ...(email != null && { email }),
+      },
+    });
+
+    if (!user) {
+      return null;
+    } else {
+      res.json({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      });
+    }
   } catch (error) {
     res.status(400).json((error as Error).message);
   }
