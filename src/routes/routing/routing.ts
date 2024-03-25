@@ -9,8 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export const router = express.Router();
 
-const MODEL = 'task';
-const BASE_URL = `${MODEL}s`;
+const MODEL = 'routing';
 
 export const creationSchema = object({
   startCoords: tuple([

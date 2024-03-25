@@ -1,5 +1,7 @@
 import 'dotenv/config';
 
+import { createServer } from 'http';
+
 import { app } from './app';
 import { log } from './loger';
 
@@ -8,8 +10,6 @@ import path from 'path';
 
 const PORT = Number(process.env.PORT) || 3000;
 const HOSTNAME = process.env.HOSTNAME || 'localhost';
-
-import { createServer } from 'http';
 
 try {
   // const bree = new Bree({

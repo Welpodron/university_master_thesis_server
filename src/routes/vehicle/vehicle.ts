@@ -2,7 +2,7 @@ import express from 'express';
 
 import { object, number, string } from 'yup';
 import { USER_ROLES } from '../../constants';
-import { auth, create, read, remove, update } from '../../middlewares';
+import { auth, create, read, readOne, remove, update } from '../../middlewares';
 
 const MODEL = 'vehicle';
 const BASE_URL = `${MODEL}s`;
@@ -20,6 +20,8 @@ export const updateSchema = object({
 });
 
 router.get(`/${BASE_URL}`, auth(USER_ROLES.MANAGER), read(MODEL));
+
+router.get(`/${BASE_URL}/:id`, auth(), readOne(MODEL));
 
 router.post(
   `/${BASE_URL}`,

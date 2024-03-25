@@ -65,12 +65,17 @@ export const clarke = ({
   demands,
   capacity,
 }: ProblemType) => {
+  if (dimension == 2) {
+    return [0, 1, 0];
+  }
+
   // Calculate savings between each pair of customers
   // index 0 is the depot
   const savings = [];
 
   for (let row = 1; row < dimension; row++) {
     for (let column = row; column < dimension; column++) {
+      // console.log({ row, column });
       if (row !== column) {
         const saving =
           distancesMatrix[0][row] +
@@ -80,8 +85,10 @@ export const clarke = ({
       }
     }
   }
+
   // Sort the savings in decreasing order
   savings.sort((a, b) => b.saving - a.saving);
+
   // Initialize routes
   const routes = [];
   const nodeList = new Array(dimension - 1).fill(0).map((_, i) => i + 1);

@@ -80,6 +80,10 @@ export const bee = async ({
   useClarke?: boolean;
   iterations?: number;
 }) => {
+  if (problem.dimension == 2) {
+    return [0, 1, 0];
+  }
+
   // TODO: Реализовать многопоточность
   //! x ТУТ это массив решений solutions: Randomly generate a set of solutions as initial food source
   const solutions: number[][] = [];
@@ -102,6 +106,8 @@ export const bee = async ({
       solutions.push(generatedSolution);
     }
   }
+
+  // console.log(CLARKE_CACHED);
 
   // ! fitnesses это массив значений пригодности решений
 

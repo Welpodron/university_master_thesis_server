@@ -5,7 +5,7 @@ import { object, string } from 'yup';
 import { Mailer } from '../../mailer';
 import { USER_ROLES } from '../../constants';
 import { DB, _models } from '../../db';
-import { auth, remove } from '../../middlewares';
+import { auth, readOne, remove } from '../../middlewares';
 import { generatePassword } from '../../utils/utils';
 
 import { hash } from 'bcrypt';
@@ -61,6 +61,8 @@ router.get(`/${BASE_URL}`, auth(USER_ROLES.MANAGER), async (req, res) => {
     res.status(500).json((error as Error).message);
   }
 });
+
+router.get(`/${BASE_URL}/:id`, auth(), readOne(MODEL));
 
 router.post(`/${BASE_URL}`, auth(USER_ROLES.MANAGER), async (req, res) => {
   try {

@@ -449,7 +449,11 @@ router.get('/calculate', async (req, res, next) => {
         })
       ) {
         // path to task from depot was NOT found so this task is fucked
-
+        console.log(
+          `Не удалось проложить маршрут между задачами: ${-1} <-> ${
+            currentTask.id
+          }`
+        );
         // before add to unsafeTasks check if it already there
         brokenTasksIds.add(currentTask.id);
         continue;
@@ -488,7 +492,9 @@ router.get('/calculate', async (req, res, next) => {
           })
         ) {
           // path to task from neighborTask was NOT found so this task is fucked
-
+          console.log(
+            `Не удалось проложить маршрут между задачами: ${currentTask.id} <-> ${neighborTask.id}`
+          );
           // before add to pathsToCalculate check if it already there
           brokenTasksIds.add(neighborTask.id);
           saveFlag = false;
@@ -659,6 +665,7 @@ router.get('/calculate', async (req, res, next) => {
         if (!currentTask) {
           brokenFlag = true;
           if (currentTaskId !== -1) {
+            console.log(`Обнаружена сломанная задача: ${currentTaskId}`);
             brokenTasksIds.add(currentTaskId);
           }
           break;
@@ -669,6 +676,7 @@ router.get('/calculate', async (req, res, next) => {
         if (!nextTask) {
           brokenFlag = true;
           if (nextTaskId !== -1) {
+            console.log(`Обнаружена сломанная задача: ${nextTaskId}`);
             brokenTasksIds.add(nextTaskId);
           }
           break;
@@ -699,9 +707,11 @@ router.get('/calculate', async (req, res, next) => {
           durationInHours += path.duration / 3600;
         } else {
           if (currentTaskId !== -1) {
+            console.log(`Обнаружена задача без маршрута: ${currentTaskId}`);
             brokenTasksIds.add(currentTaskId);
           }
           if (nextTaskId !== -1) {
+            console.log(`Обнаружена задача бер маршрута: ${nextTaskId}`);
             brokenTasksIds.add(nextTaskId);
           }
           brokenFlag = true;
@@ -747,6 +757,9 @@ router.get('/calculate', async (req, res, next) => {
       );
       if (firstReady == -1) {
         for (const task of assignment.tasks) {
+          console.log(
+            `Обнаружена задача, которая не может быть назначена ни одному транспорту: ${task}`
+          );
           brokenTasksIds.add(task);
           readyToAssignTasksIds.delete(task);
         }
@@ -788,6 +801,12 @@ router.get('/calculate', async (req, res, next) => {
       } catch (error) {
         console.log(error);
       }
+    }
+
+    if (brokenTasksIds.size) {
+      console.log(
+        `Сломанные задачи требуют дальнейшего рассмотрения: ${brokenTasksIds}`
+      );
     }
 
     res.json(readyToWriteToDBAssignments);
@@ -929,19 +948,3 @@ router.get('/document', async (req, res, next) => {
     res.json(resolve(process.cwd(), './simple-template.docx'));
   });
 });
-
-// router.get('/cache', async (req, res) => {
-//   try {
-//     const cache = await Cacher.read();
-
-//     for (const row of cache) {
-
-//     }
-
-//     res.json(cache);
-//   } catch (error) {
-//     res
-//       .status(StatusCodes.INTERNAL_SERVER_ERROR)
-//       .json((error as Error).message);
-//   }
-// });

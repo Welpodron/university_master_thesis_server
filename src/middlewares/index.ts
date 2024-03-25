@@ -6,6 +6,7 @@ export { hook, notify } from './hook/hook';
 
 export { create } from './crud/create';
 export { read } from './crud/read';
+export { readOne } from './crud/readOne';
 export { update } from './crud/update';
 export { remove } from './crud/remove';
 

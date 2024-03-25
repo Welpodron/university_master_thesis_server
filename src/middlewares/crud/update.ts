@@ -2,7 +2,7 @@ import type { RequestHandler } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { DB } from '../../db';
 
-import { ValidationError } from 'yup';
+import { ValidationError, setLocale } from 'yup';
 import type { Schema } from 'yup';
 
 export const update =
