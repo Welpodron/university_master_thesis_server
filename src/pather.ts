@@ -19,14 +19,16 @@ export type OpenRouteServiceResponseType = {
 
 //! TODO: Оптимизировать с помощью кэша те запоминать маршруты и их расстояние и время в кэш
 export const getDistanceWithOpenRouteService = async ({
+  apiKey,
   startPoint,
   endPoint,
 }: {
+  apiKey: string;
   startPoint: EarthPointType;
   endPoint: EarthPointType;
 }) => {
   //! ВНИМАНИЕ! Тут координаты передаются сначала longitude (долгота) а потом latitude (широта)
-  const url = `https://api.openrouteservice.org/v2/directions/driving-hgv?api_key=${process.env.OPEN_ROUTE_API_KEY}&start=${startPoint.longitude},${startPoint.latitude}&end=${endPoint.longitude},${endPoint.latitude}`;
+  const url = `https://api.openrouteservice.org/v2/directions/driving-hgv?api_key=${apiKey}&start=${startPoint.longitude},${startPoint.latitude}&end=${endPoint.longitude},${endPoint.latitude}`;
 
   const response = await fetch(url);
 

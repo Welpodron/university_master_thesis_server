@@ -15,6 +15,7 @@ import { resolve } from 'path';
 
 import * as fs from 'fs';
 import { getRouteCapacity, getSolutionRoutesFlat } from '../../solvers/utils';
+import { Mailer } from '../../mailer';
 
 const MODEL = 'assignment';
 const BASE_URL = `${MODEL}s`;
@@ -137,9 +138,9 @@ router.get('/calculate', async (req, res, next) => {
       throw new Error('Параметры системы не обнаружены');
     }
 
-    const { depotLocation, routingAlgo, routingAlgoIterations } = settings;
+    const { depotLocation, routingAlgoIterations, routingKey } = settings;
 
-    if (!depotLocation || !routingAlgo || !routingAlgoIterations) {
+    if (!depotLocation || !routingAlgoIterations) {
       throw new Error(
         'Параметры системы повреждены и не доступны на данный момент для использования'
       );
@@ -197,141 +198,96 @@ router.get('/calculate', async (req, res, next) => {
       try {
         const startCoords = JSON.parse(row.startCoords);
         if (!Array.isArray(startCoords) || startCoords.length !== 2) {
+          console.log(
+            `Внимание! Обнаружена поврежденная строка кэша с id: ${row.id}`
+          );
           continue;
         }
         const endCoords = JSON.parse(row.endCoords);
         if (!Array.isArray(endCoords) || endCoords.length !== 2) {
+          console.log(
+            `Внимание! Обнаружена поврежденная строка кэша с id: ${row.id}`
+          );
           continue;
         }
         cache.push({
           ...row,
         });
       } catch (_) {
+        console.log(
+          `Внимание! Обнаружена поврежденная строка кэша с id: ${row.id}`
+        );
         continue;
       }
     }
 
-    // check missing cache hits
-    await log({
-      message: 'Запущена маршрутизация',
-      code: 'PATHER',
-    });
+    if (!routingKey.trim().length) {
+      await log({
+        message: `Не найден ключ автоматической маршрутизации, автоматическая маршрутизация отключена`,
+        code: 'PATHER',
+      });
+    } else {
+      await log({
+        message: 'Запущена автоматическая маршрутизация',
+        code: 'PATHER',
+      });
 
-    // tasks to route
-    const pathsToCalculate: {
-      fromCoords: string;
-      toCoords: string;
-      fromTaskId: number;
-      toTaskId: number;
-    }[] = [];
+      // tasks to route
+      const pathsToCalculate: {
+        fromCoords: string;
+        toCoords: string;
+        fromTaskId: number;
+        toTaskId: number;
+      }[] = [];
 
-    for (let i = 0; i < tasks.length; i++) {
-      //! depotLocation must be string like '[latitude,longitude]'
-      // first of all check if path from depot to task is found
-      // if not path from depot to task is not found well we already fucked
-      const currentTask = tasks[i];
-      const currentTaskLocation = [currentTask.latitude, currentTask.longitude];
-      const currentTaskLocationStringified =
-        JSON.stringify(currentTaskLocation);
-
-      if (
-        !cache.some((row) => {
-          // check if path FROM depot TO currentTask is found in cache
-          if (
-            row.startCoords === depotLocation &&
-            row.endCoords === currentTaskLocationStringified
-          ) {
-            return true;
-          }
-          // check if path FROM currentTask TO depot is found in cache
-          if (
-            row.startCoords === currentTaskLocationStringified &&
-            row.endCoords === depotLocation
-          ) {
-            return true;
-          }
-          // record in cache from depot to currentTask was not found
-          return false;
-        })
-      ) {
-        // path to task from depot was NOT found so this task is fucked
-
-        // before add to pathsToCalculate check if it already there
-        if (
-          !pathsToCalculate.some((path) => {
-            // check if path starts FROM depot TO currentTaskLocation
-            if (
-              path.fromCoords === depotLocation &&
-              path.toCoords === currentTaskLocationStringified
-            ) {
-              return true;
-            }
-            // check if path starts FORM currentTaskLocation TO depot
-            if (
-              path.fromCoords === currentTaskLocationStringified &&
-              path.toCoords === depotLocation
-            ) {
-              return true;
-            }
-            // path was not found
-            return false;
-          })
-        ) {
-          pathsToCalculate.push({
-            fromCoords: depotLocation,
-            toCoords: currentTaskLocationStringified,
-            fromTaskId: -1,
-            toTaskId: currentTask.id,
-          });
-        }
-      }
-
-      // second check if path from currentTask to EVERY neighbor was found
-      for (let j = i + 1; j < tasks.length; j++) {
-        const neighborTask = tasks[j];
-        const neighborTaskLocation = [
-          neighborTask.latitude,
-          neighborTask.longitude,
+      for (let i = 0; i < tasks.length; i++) {
+        //! depotLocation must be string like '[latitude,longitude]'
+        // first of all check if path from depot to task is found
+        // if not path from depot to task is not found well we already fucked
+        const currentTask = tasks[i];
+        const currentTaskLocation = [
+          currentTask.latitude,
+          currentTask.longitude,
         ];
-        const neighborTaskLocationStringified =
-          JSON.stringify(neighborTaskLocation);
+        const currentTaskLocationStringified =
+          JSON.stringify(currentTaskLocation);
 
         if (
           !cache.some((row) => {
-            // check if path FROM neighborTask TO currentTask is found in cache
+            // check if path FROM depot TO currentTask is found in cache
             if (
-              row.startCoords === neighborTaskLocationStringified &&
+              row.startCoords === depotLocation &&
               row.endCoords === currentTaskLocationStringified
             ) {
               return true;
             }
-            // check if path FROM currentTask TO neighborTask is found in cache
+            // check if path FROM currentTask TO depot is found in cache
             if (
               row.startCoords === currentTaskLocationStringified &&
-              row.endCoords === neighborTaskLocationStringified
+              row.endCoords === depotLocation
             ) {
               return true;
             }
-            // record in cache from neighborTask to currentTask was not found
+            // record in cache from depot to currentTask was not found
             return false;
           })
         ) {
-          // path to task from neighborTask was NOT found so this task is fucked
+          // path to task from depot was NOT found so this task is fucked
 
           // before add to pathsToCalculate check if it already there
           if (
             !pathsToCalculate.some((path) => {
-              // check if path starts FROM neighborTask TO currentTaskLocation
+              // check if path starts FROM depot TO currentTaskLocation
               if (
-                path.fromCoords === neighborTaskLocationStringified &&
+                path.fromCoords === depotLocation &&
                 path.toCoords === currentTaskLocationStringified
               ) {
                 return true;
               }
-              // check if path starts FORM currentTaskLocation TO neighborTask
+              // check if path starts FORM currentTaskLocation TO depot
               if (
                 path.fromCoords === currentTaskLocationStringified &&
-                path.toCoords === neighborTaskLocationStringified
+                path.toCoords === depotLocation
               ) {
                 return true;
               }
@@ -340,61 +296,130 @@ router.get('/calculate', async (req, res, next) => {
             })
           ) {
             pathsToCalculate.push({
-              fromTaskId: currentTask.id,
-              toTaskId: neighborTask.id,
-              fromCoords: neighborTaskLocationStringified,
+              fromCoords: depotLocation,
               toCoords: currentTaskLocationStringified,
+              fromTaskId: -1,
+              toTaskId: currentTask.id,
             });
           }
         }
+
+        // second check if path from currentTask to EVERY neighbor was found
+        for (let j = i + 1; j < tasks.length; j++) {
+          const neighborTask = tasks[j];
+          const neighborTaskLocation = [
+            neighborTask.latitude,
+            neighborTask.longitude,
+          ];
+          const neighborTaskLocationStringified =
+            JSON.stringify(neighborTaskLocation);
+
+          if (
+            !cache.some((row) => {
+              // check if path FROM neighborTask TO currentTask is found in cache
+              if (
+                row.startCoords === neighborTaskLocationStringified &&
+                row.endCoords === currentTaskLocationStringified
+              ) {
+                return true;
+              }
+              // check if path FROM currentTask TO neighborTask is found in cache
+              if (
+                row.startCoords === currentTaskLocationStringified &&
+                row.endCoords === neighborTaskLocationStringified
+              ) {
+                return true;
+              }
+              // record in cache from neighborTask to currentTask was not found
+              return false;
+            })
+          ) {
+            // path to task from neighborTask was NOT found so this task is fucked
+
+            // before add to pathsToCalculate check if it already there
+            if (
+              !pathsToCalculate.some((path) => {
+                // check if path starts FROM neighborTask TO currentTaskLocation
+                if (
+                  path.fromCoords === neighborTaskLocationStringified &&
+                  path.toCoords === currentTaskLocationStringified
+                ) {
+                  return true;
+                }
+                // check if path starts FORM currentTaskLocation TO neighborTask
+                if (
+                  path.fromCoords === currentTaskLocationStringified &&
+                  path.toCoords === neighborTaskLocationStringified
+                ) {
+                  return true;
+                }
+                // path was not found
+                return false;
+              })
+            ) {
+              pathsToCalculate.push({
+                fromTaskId: currentTask.id,
+                toTaskId: neighborTask.id,
+                fromCoords: neighborTaskLocationStringified,
+                toCoords: currentTaskLocationStringified,
+              });
+            }
+          }
+        }
       }
-    }
 
-    for (const path of pathsToCalculate) {
-      await sleep({ ms: 2500 });
+      for (const path of pathsToCalculate) {
+        await sleep({ ms: 2500 });
 
-      await log({
-        message: `Построение пути: ${path.fromCoords} -> ${path.toCoords} задачи: ${path.fromTaskId} -> ${path.toTaskId}`,
-        code: 'PATHER',
-      });
+        await log({
+          message: `Построение пути: ${path.fromCoords} -> ${path.toCoords} задачи: ${path.fromTaskId} -> ${path.toTaskId}`,
+          code: 'PATHER',
+        });
 
-      let startCoords = [];
-      let endCoords = [];
+        let startCoords = [];
+        let endCoords = [];
 
-      try {
-        startCoords = JSON.parse(path.fromCoords);
-        endCoords = JSON.parse(path.toCoords);
-      } catch (_) {
-        continue;
-      }
+        try {
+          startCoords = JSON.parse(path.fromCoords);
+          endCoords = JSON.parse(path.toCoords);
+        } catch (_) {
+          continue;
+        }
 
-      try {
-        const { distance, duration, coordinates } =
-          await getDistanceWithOpenRouteService({
-            startPoint: {
-              latitude: startCoords[0],
-              longitude: startCoords[1],
-            },
-            endPoint: {
-              latitude: endCoords[0],
-              longitude: endCoords[1],
+        try {
+          const { distance, duration, coordinates } =
+            await getDistanceWithOpenRouteService({
+              apiKey: routingKey.trim(),
+              startPoint: {
+                latitude: startCoords[0],
+                longitude: startCoords[1],
+              },
+              endPoint: {
+                latitude: endCoords[0],
+                longitude: endCoords[1],
+              },
+            });
+
+          await DB.routing.create({
+            data: {
+              id: uuidv4(),
+              distance,
+              duration,
+              pathCoords: JSON.stringify(coordinates),
+              manual: false,
+              startCoords: path.fromCoords,
+              endCoords: path.toCoords,
             },
           });
-
-        await DB.routing.create({
-          data: {
-            id: uuidv4(),
-            distance,
-            duration,
-            pathCoords: JSON.stringify(coordinates),
-            manual: false,
-            startCoords: path.fromCoords,
-            endCoords: path.toCoords,
-          },
-        });
-      } catch (error) {
-        console.error(error);
+        } catch (error) {
+          console.error(error);
+        }
       }
+
+      await log({
+        message: 'Автоматическая маршрутизация завершена',
+        code: 'PATHER',
+      });
     }
 
     const updatedCache = await DB.routing.findMany();
@@ -402,11 +427,6 @@ router.get('/calculate', async (req, res, next) => {
     if (!updatedCache.length) {
       throw new Error('Таблица маршрутизации пуста');
     }
-
-    await log({
-      message: 'Маршрутизация завершена',
-      code: 'PATHER',
-    });
 
     const safeTasks: {
       id: number;
@@ -807,6 +827,10 @@ router.get('/calculate', async (req, res, next) => {
       console.log(
         `Сломанные задачи требуют дальнейшего рассмотрения: ${brokenTasksIds}`
       );
+
+      //! Сломанные задачи распределяются между дополнительным транспортом по степени загруженности
+      //! Если задача не может быть назначена ни одному дополнительному транспорту данная задача отправляется
+      //! Главному менеджеру компании для дальнейшего рассмотрения причин (в ней будет указана потенциальная причина)
     }
 
     res.json(readyToWriteToDBAssignments);
@@ -817,134 +841,533 @@ router.get('/calculate', async (req, res, next) => {
   }
 });
 
-router.get('/document', async (req, res, next) => {
+router.get('/document/:id', async (req, res, next) => {
   import('docx').then((_docx) => {
-    const docx = _docx as any;
-    const {
-      ExternalHyperlink,
-      HeadingLevel,
-      Paragraph,
-      patchDocument,
-      PatchType,
-      Table,
-      TableCell,
-      TableRow,
-      TextDirection,
-      TextRun,
-      VerticalAlign,
-    } = docx;
+    (async () => {
+      try {
+        const { id } = req.params;
 
-    patchDocument(
-      fs.readFileSync(resolve(process.cwd(), './ROUTING_LIST_TEMPLATE.docx')),
-      {
-        outputType: 'nodebuffer',
-        patches: {
-          name: {
-            type: PatchType.PARAGRAPH,
-            children: [
-              new TextRun('Sir. '),
-              new TextRun('John Doe'),
-              new TextRun('(The Conqueror)'),
-            ],
+        const assignment = await DB.assignment.findFirst({
+          where: {
+            id: Number(id),
           },
-          header_adjective: {
-            type: PatchType.PARAGRAPH,
-            children: [new TextRun('Delightful Header')],
+          include: {
+            user: true,
+            vehicle: true,
+            tasks: true,
           },
-          footer_text: {
-            type: PatchType.PARAGRAPH,
-            children: [
-              new TextRun('replaced just as'),
-              new TextRun(' well'),
-              new ExternalHyperlink({
+        });
+
+        if (!assignment) {
+          throw new Error(
+            'Не найдено назначение для создания маршрутного листа'
+          );
+        }
+
+        const docx = _docx as any;
+        const {
+          ExternalHyperlink,
+          HeadingLevel,
+          Paragraph,
+          patchDocument,
+          PatchType,
+          Table,
+          TableCell,
+          TableRow,
+          TextDirection,
+          TextRun,
+          VerticalAlign,
+          WidthType,
+        } = docx;
+
+        patchDocument(
+          fs.readFileSync(
+            resolve(process.cwd(), './ROUTING_LIST_TEMPLATE.docx')
+          ),
+          {
+            outputType: 'nodebuffer',
+            patches: {
+              worker_name: {
+                type: PatchType.PARAGRAPH,
                 children: [
                   new TextRun({
-                    text: 'BBC News Link',
+                    text: `[${assignment.userId ?? ''}] ${
+                      assignment.user?.name ?? ''
+                    }`,
+                    font: 'Times New Roman',
                   }),
                 ],
-                link: 'https://www.bbc.co.uk/news',
-              }),
-            ],
-          },
-          table: {
-            type: PatchType.DOCUMENT,
-            children: [
-              new Table({
-                rows: [
-                  new TableRow({
-                    children: [
-                      new TableCell({
-                        children: [new Paragraph({}), new Paragraph({})],
-                        verticalAlign: VerticalAlign.CENTER,
-                      }),
-                      new TableCell({
-                        children: [new Paragraph({}), new Paragraph({})],
-                        verticalAlign: VerticalAlign.CENTER,
-                      }),
-                      new TableCell({
+              },
+              worker_role: {
+                type: PatchType.PARAGRAPH,
+                children: [
+                  new TextRun({
+                    text: 'Водитель',
+                    font: 'Times New Roman',
+                  }),
+                ],
+              },
+              transport: {
+                type: PatchType.PARAGRAPH,
+                children: [
+                  new TextRun({
+                    text: `[${assignment.vehicleId ?? ''}] ${
+                      assignment.vehicle?.name ?? ''
+                    }`,
+                    font: 'Times New Roman',
+                  }),
+                ],
+              },
+              number: {
+                type: PatchType.PARAGRAPH,
+                children: [
+                  new TextRun({
+                    text: String(assignment.id),
+                    font: 'Times New Roman',
+                  }),
+                ],
+              },
+              date: {
+                type: PatchType.PARAGRAPH,
+                children: [
+                  new TextRun({
+                    text: `${assignment.createdAt.getDate()}.${assignment.createdAt.getMonth()}.${assignment.createdAt.getFullYear()}`,
+                    font: 'Times New Roman',
+                  }),
+                ],
+              },
+              table: {
+                type: PatchType.DOCUMENT,
+                children: [
+                  new Table({
+                    columnWidths: [2252.5, 2252.5, 4505],
+                    rows: [
+                      new TableRow({
                         children: [
-                          new Paragraph({ text: 'bottom to top' }),
-                          new Paragraph({}),
+                          new TableCell({
+                            width: {
+                              size: 2252.5,
+                              type: WidthType.DXA,
+                            },
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: '№ Задачи',
+                                    font: 'Times New Roman',
+                                  }),
+                                ],
+                              }),
+                            ],
+                            verticalAlign: VerticalAlign.CENTER,
+                          }),
+                          new TableCell({
+                            width: {
+                              size: 2252.5,
+                              type: WidthType.DXA,
+                            },
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: 'Запрос',
+                                    font: 'Times New Roman',
+                                  }),
+                                ],
+                              }),
+                            ],
+                            verticalAlign: VerticalAlign.CENTER,
+                          }),
+                          new TableCell({
+                            width: {
+                              size: 4505,
+                              type: WidthType.DXA,
+                            },
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: 'Координаты',
+                                    font: 'Times New Roman',
+                                  }),
+                                ],
+                              }),
+                            ],
+                            verticalAlign: VerticalAlign.CENTER,
+                          }),
                         ],
-                        textDirection:
-                          TextDirection.BOTTOM_TO_TOP_LEFT_TO_RIGHT,
                       }),
-                      new TableCell({
-                        children: [
-                          new Paragraph({ text: 'top to bottom' }),
-                          new Paragraph({}),
-                        ],
-                        textDirection:
-                          TextDirection.TOP_TO_BOTTOM_RIGHT_TO_LEFT,
+                      ...assignment.tasks.map((task) => {
+                        return new TableRow({
+                          children: [
+                            new TableCell({
+                              width: {
+                                size: 2252.5,
+                                type: WidthType.DXA,
+                              },
+                              children: [
+                                new Paragraph({
+                                  children: [
+                                    new TextRun({
+                                      text: String(task.id),
+                                      font: 'Times New Roman',
+                                    }),
+                                  ],
+                                }),
+                              ],
+                              verticalAlign: VerticalAlign.CENTER,
+                            }),
+                            new TableCell({
+                              width: {
+                                size: 2252.5,
+                                type: WidthType.DXA,
+                              },
+                              children: [
+                                new Paragraph({
+                                  children: [
+                                    new TextRun({
+                                      text: String(task.demand),
+                                      font: 'Times New Roman',
+                                    }),
+                                  ],
+                                }),
+                              ],
+                              verticalAlign: VerticalAlign.CENTER,
+                            }),
+                            new TableCell({
+                              width: {
+                                size: 4505,
+                                type: WidthType.DXA,
+                              },
+                              children: [
+                                new Paragraph({
+                                  children: [
+                                    // new ExternalHyperlink({
+                                    //   children: [
+                                    //     new TextRun({
+                                    //       text: 'This is an external link!',
+                                    //       style: 'Hyperlink',
+                                    //     }),
+                                    //   ],
+                                    //   link: `https://yandex.ru/maps/`,
+                                    // }),
+                                    new TextRun({
+                                      text: `${task.latitude}, ${task.longitude}`,
+                                      font: 'Times New Roman',
+                                    }),
+                                    // new ExternalHyperlink({
+                                    //   children: [
+                                    //     new TextRun({
+                                    //       text: `${task.latitude}, ${task.longitude}`,
+                                    //       font: 'Times New Roman',
+                                    //     }),
+                                    //   ],
+                                    //   link: `https://yandex.ru/maps/?ll=${task.longitude}%2C${task.latitude}&mode=search&sll=${task.longitude}%2C${task.latitude}&text=${task.latitude}%2C${task.longitude}&z=17`,
+                                    // }),
+                                  ],
+                                }),
+                              ],
+                              verticalAlign: VerticalAlign.CENTER,
+                            }),
+                          ],
+                        });
                       }),
                     ],
                   }),
-                  new TableRow({
-                    children: [
-                      new TableCell({
-                        children: [
-                          new Paragraph({
-                            text: 'Blah Blah Blah Blah Blah Blah Blah Blah Blah Blah Blah Blah Blah Blah Blah Blah Blah Blah Blah Blah Blah Blah Blah Blah Blah',
-                            heading: HeadingLevel.HEADING_1,
-                          }),
-                        ],
-                      }),
-                      new TableCell({
-                        children: [
-                          new Paragraph({
-                            text: 'This text should be in the middle of the cell',
-                          }),
-                        ],
-                        verticalAlign: VerticalAlign.CENTER,
-                      }),
-                      new TableCell({
-                        children: [
-                          new Paragraph({
-                            text: 'Text above should be vertical from bottom to top',
-                          }),
-                        ],
-                        verticalAlign: VerticalAlign.CENTER,
-                      }),
-                      new TableCell({
-                        children: [
-                          new Paragraph({
-                            text: 'Text above should be vertical from top to bottom',
-                          }),
-                        ],
-                        verticalAlign: VerticalAlign.CENTER,
-                      }),
-                    ],
-                  }),
                 ],
-              }),
-            ],
-          },
-        },
-      }
-    ).then((doc: any) => {
-      fs.writeFileSync('My Document.docx', doc);
-    });
+              },
+            },
+          }
+        ).then((doc: any) => {
+          res.writeHead(200, {
+            'Content-Disposition': `attachment; filename=${encodeURI(
+              `Маршрутный лист №${assignment.id}.docx`
+            )}`,
+            'Content-Type':
+              'application/application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          });
+          res.end(doc, 'binary');
+          // fs.writeFileSync('My Document.docx', doc);
+        });
 
-    res.json(resolve(process.cwd(), './simple-template.docx'));
+        // res.json(resolve(process.cwd(), './simple-template.docx'));
+      } catch (error) {
+        res.status(500).json((error as Error).message);
+      }
+    })();
+  });
+});
+
+router.get('/notify/:id', async (req, res, next) => {
+  import('docx').then((_docx) => {
+    (async () => {
+      try {
+        const { id } = req.params;
+
+        const assignment = await DB.assignment.findFirst({
+          where: {
+            id: Number(id),
+          },
+          include: {
+            user: true,
+            vehicle: true,
+            tasks: true,
+          },
+        });
+
+        if (!assignment) {
+          throw new Error('Не найдено назначение');
+        }
+
+        if (!assignment?.user) {
+          throw new Error(
+            'Не найден сотрудник назначенный на данное назначение'
+          );
+        }
+
+        if (!assignment?.vehicle) {
+          throw new Error(
+            'Не найден транспорт назначенный на данное назначение'
+          );
+        }
+
+        const docx = _docx as any;
+        const {
+          ExternalHyperlink,
+          HeadingLevel,
+          Paragraph,
+          patchDocument,
+          PatchType,
+          Table,
+          TableCell,
+          TableRow,
+          TextDirection,
+          TextRun,
+          VerticalAlign,
+          WidthType,
+        } = docx;
+
+        patchDocument(
+          fs.readFileSync(
+            resolve(process.cwd(), './ROUTING_LIST_TEMPLATE.docx')
+          ),
+          {
+            outputType: 'nodebuffer',
+            patches: {
+              worker_name: {
+                type: PatchType.PARAGRAPH,
+                children: [
+                  new TextRun({
+                    text: `[${assignment.userId ?? ''}] ${
+                      assignment.user?.name ?? ''
+                    }`,
+                    font: 'Times New Roman',
+                  }),
+                ],
+              },
+              worker_role: {
+                type: PatchType.PARAGRAPH,
+                children: [
+                  new TextRun({
+                    text: 'Водитель',
+                    font: 'Times New Roman',
+                  }),
+                ],
+              },
+              transport: {
+                type: PatchType.PARAGRAPH,
+                children: [
+                  new TextRun({
+                    text: `[${assignment.vehicleId ?? ''}] ${
+                      assignment.vehicle?.name ?? ''
+                    }`,
+                    font: 'Times New Roman',
+                  }),
+                ],
+              },
+              number: {
+                type: PatchType.PARAGRAPH,
+                children: [
+                  new TextRun({
+                    text: String(assignment.id),
+                    font: 'Times New Roman',
+                  }),
+                ],
+              },
+              date: {
+                type: PatchType.PARAGRAPH,
+                children: [
+                  new TextRun({
+                    text: `${assignment.createdAt.getDate()}.${assignment.createdAt.getMonth()}.${assignment.createdAt.getFullYear()}`,
+                    font: 'Times New Roman',
+                  }),
+                ],
+              },
+              table: {
+                type: PatchType.DOCUMENT,
+                children: [
+                  new Table({
+                    columnWidths: [2252.5, 2252.5, 4505],
+                    rows: [
+                      new TableRow({
+                        children: [
+                          new TableCell({
+                            width: {
+                              size: 2252.5,
+                              type: WidthType.DXA,
+                            },
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: '№ Задачи',
+                                    font: 'Times New Roman',
+                                  }),
+                                ],
+                              }),
+                            ],
+                            verticalAlign: VerticalAlign.CENTER,
+                          }),
+                          new TableCell({
+                            width: {
+                              size: 2252.5,
+                              type: WidthType.DXA,
+                            },
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: 'Запрос',
+                                    font: 'Times New Roman',
+                                  }),
+                                ],
+                              }),
+                            ],
+                            verticalAlign: VerticalAlign.CENTER,
+                          }),
+                          new TableCell({
+                            width: {
+                              size: 4505,
+                              type: WidthType.DXA,
+                            },
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: 'Координаты',
+                                    font: 'Times New Roman',
+                                  }),
+                                ],
+                              }),
+                            ],
+                            verticalAlign: VerticalAlign.CENTER,
+                          }),
+                        ],
+                      }),
+                      ...assignment.tasks.map((task) => {
+                        return new TableRow({
+                          children: [
+                            new TableCell({
+                              width: {
+                                size: 2252.5,
+                                type: WidthType.DXA,
+                              },
+                              children: [
+                                new Paragraph({
+                                  children: [
+                                    new TextRun({
+                                      text: String(task.id),
+                                      font: 'Times New Roman',
+                                    }),
+                                  ],
+                                }),
+                              ],
+                              verticalAlign: VerticalAlign.CENTER,
+                            }),
+                            new TableCell({
+                              width: {
+                                size: 2252.5,
+                                type: WidthType.DXA,
+                              },
+                              children: [
+                                new Paragraph({
+                                  children: [
+                                    new TextRun({
+                                      text: String(task.demand),
+                                      font: 'Times New Roman',
+                                    }),
+                                  ],
+                                }),
+                              ],
+                              verticalAlign: VerticalAlign.CENTER,
+                            }),
+                            new TableCell({
+                              width: {
+                                size: 4505,
+                                type: WidthType.DXA,
+                              },
+                              children: [
+                                new Paragraph({
+                                  children: [
+                                    // new ExternalHyperlink({
+                                    //   children: [
+                                    //     new TextRun({
+                                    //       text: 'This is an external link!',
+                                    //       style: 'Hyperlink',
+                                    //     }),
+                                    //   ],
+                                    //   link: `https://yandex.ru/maps/`,
+                                    // }),
+                                    new TextRun({
+                                      text: `${task.latitude}, ${task.longitude}`,
+                                      font: 'Times New Roman',
+                                    }),
+                                    // new ExternalHyperlink({
+                                    //   children: [
+                                    //     new TextRun({
+                                    //       text: `${task.latitude}, ${task.longitude}`,
+                                    //       font: 'Times New Roman',
+                                    //     }),
+                                    //   ],
+                                    //   link: `https://yandex.ru/maps/?ll=${task.longitude}%2C${task.latitude}&mode=search&sll=${task.longitude}%2C${task.latitude}&text=${task.latitude}%2C${task.longitude}&z=17`,
+                                    // }),
+                                  ],
+                                }),
+                              ],
+                              verticalAlign: VerticalAlign.CENTER,
+                            }),
+                          ],
+                        });
+                      }),
+                    ],
+                  }),
+                ],
+              },
+            },
+          }
+        ).then((doc: any) => {
+          Mailer.sendMail({
+            from: process.env.MAIL_SMTP_USER,
+            to: assignment.user?.email,
+            subject: 'Уведомление о транспортном назначении',
+            html: `Сообщаем вам о назначеном вам маршрутном листе, его содержимое во вложении:`,
+            attachments: [
+              {
+                filename: `Маршрутный лист №${assignment.id}.docx`,
+                content: doc,
+              },
+            ],
+          })
+            .then(() => {
+              res.json(true);
+            })
+            .catch(() => {
+              res.status(500).json('Ошибка при отправке уведомления');
+            });
+        });
+      } catch (error) {
+        res.status(500).json((error as Error).message);
+      }
+    })();
   });
 });

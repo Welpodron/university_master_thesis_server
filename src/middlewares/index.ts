@@ -9,6 +9,7 @@ export { read } from './crud/read';
 export { readOne } from './crud/readOne';
 export { update } from './crud/update';
 export { remove } from './crud/remove';
+export { importer } from './crud/importer';
 
 export { create as createWS } from './socket/crud/create';
 export { read as readWS } from './socket/crud/read';

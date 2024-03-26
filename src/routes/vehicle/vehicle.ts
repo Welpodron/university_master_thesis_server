@@ -2,7 +2,15 @@ import express from 'express';
 
 import { object, number, string } from 'yup';
 import { USER_ROLES } from '../../constants';
-import { auth, create, read, readOne, remove, update } from '../../middlewares';
+import {
+  auth,
+  create,
+  importer,
+  read,
+  readOne,
+  remove,
+  update,
+} from '../../middlewares';
 
 const MODEL = 'vehicle';
 const BASE_URL = `${MODEL}s`;
@@ -27,6 +35,12 @@ router.post(
   `/${BASE_URL}`,
   auth(USER_ROLES.MANAGER),
   create(MODEL, creationSchema)
+);
+
+router.post(
+  `/${BASE_URL}_import`,
+  auth(USER_ROLES.MANAGER),
+  importer(MODEL, creationSchema)
 );
 
 router.put(

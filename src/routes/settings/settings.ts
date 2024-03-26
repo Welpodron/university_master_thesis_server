@@ -6,6 +6,8 @@ import { DB } from '../../db';
 import { ValidationError, array, number, object, string, tuple } from 'yup';
 import { StatusCodes } from 'http-status-codes';
 
+// DEFAULT DEPOT LOCATION FOR TESTING PURPS: [55.746081,37.887085]
+
 export const router = express.Router();
 
 export const updateSchema = object({
@@ -34,6 +36,7 @@ export const updateSchema = object({
     }),
   ]),
   routingAlgo: string(),
+  routingKey: string(),
   routingAlgoIterations: number().integer().min(1),
 });
 
@@ -66,6 +69,7 @@ router.put('/settings', async (req, res) => {
           ? { depotLocation: JSON.stringify(data.depotLocation) }
           : {}),
         ...(data.routingAlgo ? { routingAlgo: data.routingAlgo } : {}),
+        ...(data.routingKey ? { routingKey: data.routingKey } : {}),
         ...(data.routingAlgoIterations
           ? { routingAlgoIterations: data.routingAlgoIterations }
           : {}),
@@ -73,6 +77,7 @@ router.put('/settings', async (req, res) => {
       create: {
         id: -1,
         depotLocation: '[]',
+        routingKey: '',
         routingAlgo: 'ABC_CLARKE',
         routingAlgoIterations: 100,
       },
@@ -99,12 +104,14 @@ router.purge('/settings', async (req, res) => {
       update: {
         id: -1,
         depotLocation: '[]',
+        routingKey: '',
         routingAlgo: 'ABC_CLARKE',
         routingAlgoIterations: 100,
       },
       create: {
         id: -1,
         depotLocation: '[]',
+        routingKey: '',
         routingAlgo: 'ABC_CLARKE',
         routingAlgoIterations: 100,
       },
